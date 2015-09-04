@@ -14,6 +14,5 @@ def cli():
 def seamfill(src_path, dst_path, max_search_distance, nibblemask):
     """"""
     nodata.seamfill.fillseams(src_path, dst_path, max_search_distance, nibblemask)
-    # fillseams(src_path, dst_path, max_search_distance, nibblemask)
 
 cli.add_command(seamfill)

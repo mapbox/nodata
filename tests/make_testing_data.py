@@ -51,6 +51,7 @@ def getnulldiff(in1, in2, threshold):
     allmsk1 = ((msk1[0] == 0) & (msk1[1] == 0) & (msk1[1] == 0)).astype(int)
     allmsk2 = ((msk2[0] == 0) & (msk2[1] == 0) & (msk2[1] == 0)).astype(int)
     diff = np.count_nonzero(allmsk1) - np.count_nonzero(allmsk2)
+    
     assert diff >= threshold, "input 1 has more than %d nodata pixels than input 2" % (threshold)
 
 if __name__ == '__main__':
