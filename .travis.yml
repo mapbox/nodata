@@ -41,6 +41,11 @@ before_install:
   - pip install wheel
 
 install:
+  # Before installation, we'll run ``pip wheel``, this will build wheels for
+  # anything that doesn't already have one on PyPI.
+  # Scipy wheel building may time out without travis_wait, so we give it
+  # special treatment.
+  - travis_wait pip wheel "$(grep scipy requirements.txt)"
   - "pip wheel -r requirements.txt"
   # Actually install our dependencies now, this will pull from the directory
   # that the first command placed the Wheels into.

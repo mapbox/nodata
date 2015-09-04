@@ -2,6 +2,9 @@ import rasterio as rio
 from rasterio.fill import fillnodata
 import click
 
+import numpy as np
+from scipy.ndimage.filters import maximum_filter, minimum_filter
+
 def padWindow(wnd, pad):
     return (
         (wnd[0][0] - pad, wnd[0][1] + pad),
@@ -41,8 +44,6 @@ def fillseams(src_path, dst_path, max_search_distance, nibblemask):
                         dst.write(arr, i, window=window)
 
 def nibbleFilledMask(filled, nodataval, max_search_distance, is_mask=False):
-    import numpy as np
-    from scipy.ndimage.filters import maximum_filter, minimum_filter
     filled = np.array(filled)
     if is_mask:
         filled = minimum_filter(filled, size=(max_search_distance * 2 + 1))
