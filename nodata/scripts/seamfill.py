@@ -1,49 +1,63 @@
-import rasterio as rio
-from rasterio.fill import fillnodata
 import click
 
 import numpy as np
+
+import rasterio as rio
+from rasterio.fill import fillnodata
+import riomucho
+
 from scipy.ndimage.filters import maximum_filter, minimum_filter
 
-def padWindow(wnd, pad):
+def pad_window(wnd, pad):
     return (
         (wnd[0][0] - pad, wnd[0][1] + pad),
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+def seam_filler(srcs, window, ij, globalArgs):
+    pad = globalArgs['max_search_distance'] + 1
+
+    padWindow = pad_window(window, pad)
+
+    if srcs[0].count == 3:
+        mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
+        alphamask = False
+    else:
+        mask = srcs[0].read(src.count, boundless=True, window=padWindow)
+        alphamask = True
+
+    ras = srcs[0].read(boundless=True, window=padWindow)
+
+    if mask[pad:-pad, pad:-pad].any():
+        ras = np.array([fillnodata(b, mask, globalArgs['max_search_distance'])[pad:-pad, pad:-pad] for b in ras])
+
+        if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
+            ras = nibble_filled_mask(ras, srcs[0].meta['nodata'], globalArgs['max_search_distance'])
+
+        elif globalArgs['nibblemask'] and alphamask:
+            ras[-1] = nibble_filled_mask(ras[-1], None, globalArgs['max_search_distance'], True)
+
+    return ras
+
 def fillseams(src_path, dst_path, max_search_distance, nibblemask):
-    """Usage: ..."""
-    with rio.drivers():
-        with rio.open(src_path, 'r') as src:
-            kwargs = src.meta
-            kwargs.update(compress='lzw', transform=kwargs['affine'])
-            pad = max_search_distance + 1
 
-            with rio.open(dst_path, 'w', **kwargs) as dst:
-                for ji, window in src.block_windows():
-                    pWindow = padWindow(window, pad)
+    with rio.open(src_path) as src:
+        windows = [[window, ij] for ij, window in src.block_windows()]
+        options = src.meta
 
-                    if src.count == 3:
-                        mask = src.read_masks(boundless=True, window=pWindow)[0]
-                        alphamask = False
-                    else:
-                        mask = src.read(src.count, boundless=True, window=pWindow)
-                        alphamask = True
+    with riomucho.RioMucho([src_path], dst_path, seam_filler,
+        windows=windows,
+        global_args={
+            'max_search_distance': max_search_distance,
+            'nibblemask': nibblemask
+        }, 
+        options=options,
+        mode='manual_read') as rm:
 
-                    ras = src.read(boundless=True, window=pWindow)
+        rm.run(4)
 
-                    if mask[pad:-pad, pad:-pad].any():
-                        ras = [fillnodata(b, mask, max_search_distance)[pad:-pad, pad:-pad] for b in ras]
 
-                        if nibblemask and alphamask == False and 'nodata' in src.meta:
-                            ras = nibbleFilledMask(ras, src.meta['nodata'], max_search_distance)
-                        elif nibblemask and alphamask:
-                            ras[-1] = nibbleFilledMask(ras[-1], None, max_search_distance, True)
-
-                    for i, arr in enumerate(ras, 1):
-                        dst.write(arr, i, window=window)
-
-def nibbleFilledMask(filled, nodataval, max_search_distance, is_mask=False):
+def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
     filled = np.array(filled)
     if is_mask:
         filled = minimum_filter(filled, size=(max_search_distance * 2 + 1))
@@ -55,7 +69,7 @@ def nibbleFilledMask(filled, nodataval, max_search_distance, is_mask=False):
 
     return filled
 
-def makeNibbled(src_path, dst_path, nibble):
+def make_nibbled(src_path, dst_path, nibble):
     with rio.drivers():
         with rio.open(src_path, 'r') as src:
             ras = src.read(masked=False)
@@ -68,7 +82,7 @@ def makeNibbled(src_path, dst_path, nibble):
         # to silence the warning  
         kwargs.update(compress='lzw', transform=kwargs['affine'])
 
-        nibbled = nibbleFilledMask(ras, nodataval, nibble)
+        nibbled = nibble_filled_mask(ras, nodataval, nibble)
 
         with rio.open(dst_path, 'w', **kwargs) as dst:
             for i, arr in enumerate(nibbled, 1):
