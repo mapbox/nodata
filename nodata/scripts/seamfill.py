@@ -46,7 +46,6 @@ def seam_filler(srcs, window, ij, globalArgs):
                 None,
                 globalArgs['max_search_distance'],
                 True)
-    img[3] = (img[3] == 255).astype(np.uint8)
 
     return img[:, pad: -pad, pad: -pad]
 
