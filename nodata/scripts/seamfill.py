@@ -1,8 +1,8 @@
 import click
-
+import json
 import numpy as np
 
-import imgterio as rio
+import rasterio as rio
 from rasterio.fill import fillnodata
 import riomucho
 
@@ -14,6 +14,7 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+
 def seam_filler(srcs, window, ij, globalArgs):
     pad = globalArgs['max_search_distance'] + 1
 
@@ -23,13 +24,14 @@ def seam_filler(srcs, window, ij, globalArgs):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         alphamask = False
     else:
-        mask = srcs[0].read(src.count, boundless=True, window=padWindow)
+        mask = srcs[0].read(srcs[0].count, boundless=True, window=padWindow)
         alphamask = True
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
     if mask[pad:-pad, pad:-pad].any():
-        img = np.array([fillnodata(b, mask, globalArgs['max_search_distance']) for b in img])
+        for b in globalArgs['bands']:
+            img[b - 1] = fillnodata(img[b - 1], mask, globalArgs['max_search_distance'])
 
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
             img = nibble_filled_mask(
@@ -39,21 +41,44 @@ def seam_filler(srcs, window, ij, globalArgs):
                 )
 
         elif globalArgs['nibblemask'] and alphamask:
-            img[-1] = nibble_filled_mask(img[-1], None, globalArgs['max_search_distance'], True)
+            img[-1] = nibble_filled_mask(
+                img[-1],
+                None,
+                globalArgs['max_search_distance'],
+                True)
+    img[3] = (img[3] == 255).astype(np.uint8)
 
-    return img[:, pad:-pad, pad:-pad]
+    return img[:, pad: -pad, pad: -pad]
 
-def fillseams(src_path, dst_path, max_search_distance, nibblemask):
+def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compress):
 
     with rio.open(src_path) as src:
-        windows = [[window, ij] for ij, window in src.block_windows()]
-        options = src.meta
+        windows = [
+            [window, ij] for ij, window in src.block_windows()
+        ]
+
+        options = src.meta.copy()
+
+        if compress:
+            options.update(compress=compress)
+
+        if bidx:
+            try:
+                bidx = [int(b) for b in json.loads(bidx)]
+            except Exception as e:
+                raise e
+        else:
+            bidx = src.indexes
+
+        if len(bidx) == 0 or len(bidx) > src.count:
+            raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
 
     with riomucho.RioMucho([src_path], dst_path, seam_filler,
         windows=windows,
         global_args={
             'max_search_distance': max_search_distance,
-            'nibblemask': nibblemask
+            'nibblemask': nibblemask,
+            'bands': bidx
         }, 
         options=options,
         mode='manual_read') as rm:
