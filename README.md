@@ -4,12 +4,18 @@
 
 ## Usage
 
-### Seamfilling
+### Nodata blobbing
 ```
-nodata seamfill [OPTIONS] SRC_PATH DST_PATH
+nodata blob [OPTIONS] SRC_PATH DST_PATH
 
 Options:
--m, --max-search-distance INTEGER  Maximum filling radius [default = 4]
--n, --nibblemask                   Nibble filled nodata areas.
---help                             Show this message and exit.
+  -b, --bidx TEXT                         Bands to blob [default = all]
+  -m, --max-search-distance INTEGER       Maximum blobbing radius [default = 4]
+  -n, --nibblemask                        Nibble blobbed nodata areas [default=False]
+  -c, --compress [JPEG|LZW|DEFLATE|None]  Output compression type ('JPEG', 'LZW', 'DEFLATE')
+                                          [default = input type]
+  -d, --mask-threshold INTEGER            Alpha pixel threshold upon which to regard
+                                          data as masked (ie, for lossy you'd want an
+                                          aggressive threshold of 0) [default=None]
+  --help                                  Show this message and exit.
 ```
