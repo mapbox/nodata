@@ -14,20 +14,30 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+def make_windows(width, height, blocksize):
+    for x in range(0, width, blocksize):
+       for y in range(0, height, blocksize):
+           yield (
+               (y, min((y + blocksize), height)),
+               (x, min((x + blocksize), width))
+               )
 
 def seam_filler(srcs, window, ij, globalArgs):
     pad = globalArgs['max_search_distance'] + 1
 
     padWindow = pad_window(window, pad)
 
+    img = srcs[0].read(boundless=True, window=padWindow)
+
     if srcs[0].count == 3:
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         alphamask = False
     else:
-        mask = srcs[0].read(srcs[0].count, boundless=True, window=padWindow)
+        mask = img[-1].copy()
         alphamask = True
 
-    img = srcs[0].read(boundless=True, window=padWindow)
+    if globalArgs['maskThreshold'] != None and alphamask:
+        img[-1] = (img[-1] > globalArgs['maskThreshold']).astype(img.dtype) * img[-1].max()
 
     if mask[pad:-pad, pad:-pad].any():
         for b in globalArgs['bands']:
@@ -49,7 +59,7 @@ def seam_filler(srcs, window, ij, globalArgs):
 
     return img[:, pad: -pad, pad: -pad]
 
-def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compress):
+def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold):
 
     with rio.open(src_path) as src:
         windows = [
@@ -77,7 +87,8 @@ def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compres
         global_args={
             'max_search_distance': max_search_distance,
             'nibblemask': nibblemask,
-            'bands': bidx
+            'bands': bidx,
+            'maskThreshold': maskThreshold
         }, 
         options=options,
         mode='manual_read') as rm:
