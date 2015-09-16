@@ -19,8 +19,8 @@ def cli():
     help="Output compression type ('JPEG', 'LZW', 'DEFLATE') [default = input type]")
 @click.option('--mask-threshold', '-d', default=None, type=int,
     help="Alpha pixel threshold upon which to regard data as masked (ie, for lossy you'd want an aggressive threshold of 0) [default=None]")
-def seamfill(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold):
+def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold):
     """"""
-    nodata.seamfill.fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold)
+    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold)
 
-cli.add_command(seamfill)
+cli.add_command(blob)

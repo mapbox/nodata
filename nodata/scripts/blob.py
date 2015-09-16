@@ -17,12 +17,12 @@ def pad_window(wnd, pad):
 def make_windows(width, height, blocksize):
     for x in range(0, width, blocksize):
        for y in range(0, height, blocksize):
-           yield (
+           yield [(x, y), (
                (y, min((y + blocksize), height)),
                (x, min((x + blocksize), width))
-               )
+               )]
 
-def seam_filler(srcs, window, ij, globalArgs):
+def blob_worker(srcs, window, ij, globalArgs):
     pad = globalArgs['max_search_distance'] + 1
 
     padWindow = pad_window(window, pad)
@@ -39,7 +39,7 @@ def seam_filler(srcs, window, ij, globalArgs):
     if globalArgs['maskThreshold'] != None and alphamask:
         img[-1] = (img[-1] > globalArgs['maskThreshold']).astype(img.dtype) * img[-1].max()
 
-    if mask[pad:-pad, pad:-pad].any():
+    if mask[pad:-pad, pad:-pad].any() and not np.all(mask[pad:-pad, pad:-pad]):
         for b in globalArgs['bands']:
             img[b - 1] = fillnodata(img[b - 1], mask, globalArgs['max_search_distance'])
 
@@ -59,7 +59,7 @@ def seam_filler(srcs, window, ij, globalArgs):
 
     return img[:, pad: -pad, pad: -pad]
 
-def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold):
+def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold):
 
     with rio.open(src_path) as src:
         windows = [
@@ -82,7 +82,7 @@ def fillseams(src_path, dst_path, bidx, max_search_distance, nibblemask, compres
         if len(bidx) == 0 or len(bidx) > src.count:
             raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
 
-    with riomucho.RioMucho([src_path], dst_path, seam_filler,
+    with riomucho.RioMucho([src_path], dst_path, blob_worker,
         windows=windows,
         global_args={
             'max_search_distance': max_search_distance,
