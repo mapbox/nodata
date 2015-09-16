@@ -1,1 +1,1 @@
-from nodata.scripts import seamfill
+from nodata.scripts import blob

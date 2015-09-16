@@ -1,2 +1,3 @@
 rasterio>=0.26
 scipy
+rio-mucho
