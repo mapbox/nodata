@@ -14,15 +14,15 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
-def make_windows(width, height, blocksize):
-    for x in range(0, width, blocksize):
-       for y in range(0, height, blocksize):
-           yield [(x, y), (
-               (y, min((y + blocksize), height)),
-               (x, min((x + blocksize), width))
-               )]
+def fill_nodata(img, mask, fillBands, maxSearchDistance):
+
+    for b in fillBands:
+        img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
+
+    return img
 
 def blob_worker(srcs, window, ij, globalArgs):
+
     pad = globalArgs['max_search_distance'] + 1
 
     padWindow = pad_window(window, pad)
@@ -35,13 +35,13 @@ def blob_worker(srcs, window, ij, globalArgs):
     else:
         mask = img[-1].copy()
         alphamask = True
-
+    
     if globalArgs['maskThreshold'] != None and alphamask:
         img[-1] = (img[-1] > globalArgs['maskThreshold']).astype(img.dtype) * img[-1].max()
 
-    if mask[pad:-pad, pad:-pad].any() and not np.all(mask[pad:-pad, pad:-pad]):
-        for b in globalArgs['bands']:
-            img[b - 1] = fillnodata(img[b - 1], mask, globalArgs['max_search_distance'])
+    if mask[pad:-pad, pad:-pad].any():
+
+        img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
 
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
             img = nibble_filled_mask(
@@ -57,7 +57,7 @@ def blob_worker(srcs, window, ij, globalArgs):
                 globalArgs['max_search_distance'],
                 True)
 
-    return img[:, pad: -pad, pad: -pad]
+    return img
 
 def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold):
 
@@ -67,6 +67,12 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
         ]
 
         options = src.meta.copy()
+
+        options.update(
+            tiled=True,
+            blockxsize=src.block_shapes[0][0],
+            blockysize=src.block_shapes[0][1]
+            )
 
         if compress:
             options.update(compress=compress)
