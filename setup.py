@@ -8,7 +8,7 @@ with codecs_open('README.rst', encoding='utf-8') as f:
 
 
 setup(name='nodata',
-      version='0.0.1',
+      version='0.0.2',
       description=u"Utilities for handling nodata",
       long_description=long_description,
       classifiers=[],
@@ -22,7 +22,9 @@ setup(name='nodata',
       zip_safe=False,
       install_requires=[
           'click',
-          'rasterio'
+          'rasterio',
+          'rio-mucho',
+          'scipy'
       ],
       extras_require={
           'test': ['pytest', 'pytest-cov'],
