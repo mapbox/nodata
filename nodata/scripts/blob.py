@@ -68,6 +68,12 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
 
         options = src.meta.copy()
 
+        options.update(
+            tiled=True,
+            blockxsize=src.block_shapes[0][0],
+            blockysize=src.block_shapes[0][1]
+            )
+
         if compress:
             options.update(compress=compress)
 
