@@ -19,8 +19,10 @@ def cli():
     help="Output compression type ('JPEG', 'LZW', 'DEFLATE') [default = input type]")
 @click.option('--mask-threshold', '-d', default=None, type=int,
     help="Alpha pixel threshold upon which to regard data as masked (ie, for lossy you'd want an aggressive threshold of 0) [default=None]")
-def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold):
+@click.option('--workers', '-w', default=4, type=int,
+    help="Number of workers for multiprocessing [default=4]")
+def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers):
     """"""
-    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold)
+    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers)
 
 cli.add_command(blob)
