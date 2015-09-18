@@ -59,7 +59,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     return img
 
-def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold):
+def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers):
 
     with rio.open(src_path) as src:
         windows = [
@@ -99,7 +99,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
         options=options,
         mode='manual_read') as rm:
 
-        rm.run(4)
+        rm.run(workers)
 
 
 def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
