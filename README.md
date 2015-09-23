@@ -17,6 +17,8 @@ Options:
   -d, --mask-threshold INTEGER            Alpha pixel threshold upon which to regard
                                           data as masked (ie, for lossy you'd want an
                                           aggressive threshold of 0) [default=None]
+  -a, --alphafy                           If a RGB raster is found, blob + add alpha
+                                          band where nodata is
   -w, --workers                           Number of workers for multiprocessing [default=4]                                      
   --help                                  Show this message and exit.
 ```
