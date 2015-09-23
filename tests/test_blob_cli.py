@@ -50,3 +50,19 @@ def test_blob_filling_realdata():
     assert make_testing_data.getnulldiff(blobfile, filled_file, 101) == None
 
     tester.cleanup()
+
+def test_blob_filling_rgb():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = 'tests/fixtures/13-1326-2805-test-2015-2012_30cm_592_5450.tif'
+    filled_file = os.path.join(tmpdir, 'filledrgb.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, ['blob', blobfile, filled_file, '-m', 4, '-n'])
+    assert result.exit_code == 0
+    
+    assert make_testing_data.getnulldiff(blobfile, filled_file, 101) == None
+
+    tester.cleanup()
