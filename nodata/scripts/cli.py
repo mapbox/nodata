@@ -21,8 +21,10 @@ def cli():
     help="Alpha pixel threshold upon which to regard data as masked (ie, for lossy you'd want an aggressive threshold of 0) [default=None]")
 @click.option('--workers', '-w', default=4, type=int,
     help="Number of workers for multiprocessing [default=4]")
-def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers):
+@click.option('--alphafy', '-a', is_flag=True,
+    help='If a RGB raster is found, blob + add alpha band where nodata is')
+def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy):
     """"""
-    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers)
+    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy)
 
 cli.add_command(blob)

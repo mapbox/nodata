@@ -14,8 +14,8 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
-def test_rgb(count, nodata, outCount):
-    if count == 3:
+def test_rgb(count, nodata, alphafy, outCount):
+    if count == 3 and alphafy:
         if not isinstance(nodata, (int, long, float)):
             raise ValueError('3 band imagery must have a defined nodata value')
         
@@ -41,7 +41,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if isinstance(globalArgs['RGBnodata'], (int, long, float)):
+    if isinstance(globalArgs['outNodata'], (int, long, float)):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         img = handle_RGB(img, mask)
         alphamask = False
@@ -72,7 +72,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     return img
 
-def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers):
+def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers, alphafy):
 
     with rio.open(src_path) as src:
         windows = [
@@ -81,18 +81,18 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
 
         options = src.meta.copy()
 
-        options.update(
-            tiled=True,
-            blockxsize=src.block_shapes[0][0],
-            blockysize=src.block_shapes[0][1]
-            )
-
         if compress:
             options.update(compress=compress)
 
-        RGBnodata, outCount = test_rgb(src.count, src.nodata, 4)
+        outNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
-        options.update(count=outCount)
+        options.update(
+            tiled=True,
+            blockxsize=src.block_shapes[0][0],
+            blockysize=src.block_shapes[0][1],
+            count=outCount,
+            nodata=outNodata
+            )
 
         if bidx:
             try:
@@ -112,7 +112,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
             'nibblemask': nibblemask,
             'bands': bidx,
             'maskThreshold': maskThreshold,
-            'RGBnodata': RGBnodata
+            'outNodata': outNodata
         }, 
         options=options,
         mode='manual_read') as rm:
