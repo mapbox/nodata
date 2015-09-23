@@ -5,13 +5,13 @@ import click
 
 
 def makehappytiff(dst_path, seams_path):
-    kwargs = {'count': 3, 'crs': {'init': u'epsg:3857'}, 'dtype': 'uint8', 'affine': Affine(4.595839562240513, 0.0, -13550756.3744,
+    kwargs = {'count': 4, 'crs': {'init': u'epsg:3857'}, 'dtype': 'uint8', 'affine': Affine(4.595839562240513, 0.0, -13550756.3744,
        0.0, -4.595839562240513, 6315533.02503), 'driver': u'GTiff', 'transform': Affine(4.595839562240513, 0.0, -13550756.3744,
-       0.0, -4.595839562240513, 6315533.02503), 'height': 1065, 'width': 1065, 'nodata': 0.0, 'compress': 'lzw', 'blockxsize': 256, 'tiled': True, 'blockysize': 256}
+       0.0, -4.595839562240513, 6315533.02503), 'height': 1065, 'width': 1065, 'nodata': None, 'compress': 'lzw', 'blockxsize': 256, 'tiled': True, 'blockysize': 256}
     imsize = 1065
-    testdata = [(np.random.rand(imsize,imsize)*255).astype(np.uint8) for i in range(3)]
+    testdata = [(np.random.rand(imsize,imsize)*255).astype(np.uint8) for i in range(4)]
     
-    for i in range(3):
+    for i in range(4):
         testdata[i][0:100,:] = 0
         testdata[i][:,900:] = 0
 
@@ -26,7 +26,7 @@ def makehappytiff(dst_path, seams_path):
         rInds = np.arange(frto[0], frto[1], (frto[1] - frto[0]) / float(imsize)).astype(int)
         inds = np.arange(imsize)
 
-        for i in range(3):
+        for i in range(4):
             testdata[i][rInds, inds] = 0
             testdata[i][rInds-1, inds] = 0
             testdata[i][rInds+1, inds] = 0

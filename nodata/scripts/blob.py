@@ -14,12 +14,24 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+def test_rgb(count, nodata, alphafy, outCount):
+    if count == 3 and alphafy:
+        if not isinstance(nodata, (int, long, float)):
+            raise ValueError('3 band imagery must have a defined nodata value')
+        
+        return nodata, outCount
+    else:
+        return None, count
+
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
 
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
     return img
+
+def handle_RGB(img, mask):
+    return np.concatenate([img, np.array([mask])])
 
 def blob_worker(srcs, window, ij, globalArgs):
 
@@ -29,11 +41,12 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if srcs[0].count == 3:
+    if isinstance(globalArgs['outNodata'], (int, long, float)):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
+        img = handle_RGB(img, mask)
         alphamask = False
     else:
-        mask = img[-1].copy()
+        mask = img[-1]
         alphamask = True
     
     if globalArgs['maskThreshold'] != None and alphamask:
@@ -59,7 +72,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     return img
 
-def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers):
+def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers, alphafy):
 
     with rio.open(src_path) as src:
         windows = [
@@ -68,14 +81,18 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
 
         options = src.meta.copy()
 
+        if compress:
+            options.update(compress=compress)
+
+        outNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
+
         options.update(
             tiled=True,
             blockxsize=src.block_shapes[0][0],
-            blockysize=src.block_shapes[0][1]
+            blockysize=src.block_shapes[0][1],
+            count=outCount,
+            nodata=outNodata
             )
-
-        if compress:
-            options.update(compress=compress)
 
         if bidx:
             try:
@@ -94,7 +111,8 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
             'max_search_distance': max_search_distance,
             'nibblemask': nibblemask,
             'bands': bidx,
-            'maskThreshold': maskThreshold
+            'maskThreshold': maskThreshold,
+            'outNodata': outNodata
         }, 
         options=options,
         mode='manual_read') as rm:
