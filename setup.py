@@ -24,7 +24,8 @@ setup(name='nodata',
           'click',
           'rasterio',
           'rio-mucho',
-          'scipy'
+          'scipy',
+          'raster-tester'
       ],
       extras_require={
           'test': ['pytest', 'pytest-cov'],
