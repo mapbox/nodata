@@ -14,12 +14,24 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+def test_rgb(count, nodata, outCount):
+    if count == 3:
+        if not isinstance(nodata, (int, long, float)):
+            raise ValueError('3 band imagery must have a defined nodata value')
+        
+        return nodata, outCount
+    else:
+        return None, count
+
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
 
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
     return img
+
+def handle_RGB(img, mask):
+    return np.concatenate([img, np.array([mask])])
 
 def blob_worker(srcs, window, ij, globalArgs):
 
@@ -29,11 +41,12 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if srcs[0].count == 3:
+    if isinstance(globalArgs['RGBnodata'], (int, long, float)):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
+        img = handle_RGB(img, mask)
         alphamask = False
     else:
-        mask = img[-1].copy()
+        mask = img[-1]
         alphamask = True
     
     if globalArgs['maskThreshold'] != None and alphamask:
@@ -77,6 +90,10 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
         if compress:
             options.update(compress=compress)
 
+        RGBnodata, outCount = test_rgb(src.count, src.nodata, 4)
+
+        options.update(count=outCount)
+
         if bidx:
             try:
                 bidx = [int(b) for b in json.loads(bidx)]
@@ -94,7 +111,8 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
             'max_search_distance': max_search_distance,
             'nibblemask': nibblemask,
             'bands': bidx,
-            'maskThreshold': maskThreshold
+            'maskThreshold': maskThreshold,
+            'RGBnodata': RGBnodata
         }, 
         options=options,
         mode='manual_read') as rm:
