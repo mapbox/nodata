@@ -64,7 +64,7 @@ def test_blob_filling_rgb():
 
     runner = CliRunner()
 
-    result = runner.invoke(cli, ['blob', infile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG'])
+    result = runner.invoke(cli, ['blob', infile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG', '--alphafy'])
     assert result.exit_code == 0
 
     
@@ -90,7 +90,7 @@ def test_blob_fail_no_nodata():
 
     runner = CliRunner()
 
-    result = runner.invoke(cli, ['blob', badfile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG'])
+    result = runner.invoke(cli, ['blob', badfile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG', '--alphafy'])
     assert result.exit_code == -1
 
     tester.cleanup()
