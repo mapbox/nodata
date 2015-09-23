@@ -29,6 +29,23 @@ def test_fill_nodata(areaToFill):
     filledSum = np.sum(np.all(np.dstack(filled) == (0, 0, 0, 0), axis=2))
     assert notFilledSum > filledSum
     
+def test_handle_rgb():
+    img = np.zeros((3, 100,100))
+    mask = np.zeros((100, 100))
+    assert blob.handle_RGB(img, mask).shape == (4, 100, 100)
 
+def test_rgb_handling():
+    outNodata, outCount = blob.test_rgb(3, 0.0, True, 4)
+    assert outNodata == 0.0
+    assert outCount == 4
+
+def test_rgba_handling():
+    outNodata, outCount = blob.test_rgb(4, None, True, 4)
+    assert outNodata == None
+    assert outCount == 4
+
+def test_rgb_handling_fail():
+    with pytest.raises(ValueError):
+        blob.test_rgb(3, None, True, 4)
 
 
