@@ -42,9 +42,9 @@ def test_blob_filling_realdata():
     tmpdir = '/tmp/blob_filling'
     tester = TestingSetup(tmpdir)
 
-    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/seams_4band.tif')
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
     filled_file = os.path.join(tmpdir, 'filliwack.tif')
-    expectedfile = os.path.join(os.getcwd(), 'tests/expected/seams_4band.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/seams_4band.tif')
 
     runner = CliRunner()
 
@@ -58,9 +58,9 @@ def test_blob_filling_rgb():
     tmpdir = '/tmp/blob_filling'
     tester = TestingSetup(tmpdir)
 
-    infile = os.path.join(os.getcwd(), 'tests/fixtures/rgb_toblob.tif')
+    infile = os.path.join(os.getcwd(), 'tests/fixtures/blob/rgb_toblob.tif')
     blobbed_file = os.path.join(tmpdir, 'blobbedrgb.tif')
-    expectedfile = os.path.join(os.getcwd(), 'tests/expected/rgb_toblob.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/rgb_toblob.tif')
 
     runner = CliRunner()
 
@@ -76,7 +76,7 @@ def test_blob_fail_no_nodata():
     tmpdir = '/tmp/blob_filling'
     tester = TestingSetup(tmpdir)
 
-    infile = os.path.join(os.getcwd(), 'tests/fixtures/rgb_toblob.tif')
+    infile = os.path.join(os.getcwd(), 'tests/fixtures/blob/rgb_toblob.tif')
     badfile = os.path.join(tmpdir, 'badfile.tif')
 
     with rio.open(infile) as src:
