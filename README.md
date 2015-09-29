@@ -19,6 +19,6 @@ Options:
                                           aggressive threshold of 0) [default=None]
   -a, --alphafy                           If a RGB raster is found, blob + add alpha
                                           band where nodata is
-  -w, --workers                           Number of workers for multiprocessing [default=4]                                      
+  -w, --workers                           Number of workers for multiprocessing [default=4]             
   --help                                  Show this message and exit.
 ```
