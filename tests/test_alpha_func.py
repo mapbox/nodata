@@ -4,17 +4,11 @@ import pytest
 import rasterio as rio
 import numpy as np
 
+import nodata.alphamask as alphamask
 
 def image_reader(path):
     with rio.open(path) as src:
         return src.read()
-
-def simple_threshold(data, ndv, pad):
-    '''TEST A SIMPLE THRESHOLDING APPROACH'''
-    depth, rows, cols = data.shape
-    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(np.uint8) * 255).reshape(1, rows, cols)
-
-    return np.concatenate([data, alpha])[:, pad: -pad, pad: -pad]
 
 @pytest.fixture
 def imagesToTest():
@@ -47,9 +41,79 @@ def test_runner(imagesToTest, expectedOutput, functionArgs):
 
         expectedImg = image_reader(expected)
 
-        outputImg = simple_threshold(img, args, pad)
+        outputImg = alphamask.mask(img, args)[:, pad: -pad, pad: -pad]
 
         assert outputImg.shape == expectedImg.shape
 
         assert np.array_equal(outputImg, expectedImg)
+
+def test_alphamask_good():
+    rRows, rCols = np.random.randint(3, 300, 2)
+    fauxRGB = np.zeros((3, rRows, rCols), dtype=np.uint8) + 255
+
+    # find a random row / col idx and only apply it to one random band
+    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
+    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
+
+    cBandIdx = np.random.randint(0, 3, 1)[0]
+    fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
+
+    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
+
+    assert outputRGBA.shape == (4, rRows, rCols)
+
+    assert np.all(outputRGBA[-1]), "No mask pixels should equal 0"
+
+    # find a random row / col idx and apply it to all bands
+    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
+    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
+
+    fauxRGB[:, rRowIdx, rColIdx] = 0
+
+    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
+
+    assert outputRGBA.shape == (4, rRows, rCols)
+
+    createRowIdx, createColIdx = np.where(outputRGBA[-1] == 0)
+
+    assert len(createRowIdx) == 1
+    assert rRowIdx == createRowIdx[0]
+
+    assert len(createColIdx) == 1
+    assert rColIdx == createColIdx[0]
+
+def test_alphamask_good_alphaonly():
+    rRows, rCols = np.random.randint(3, 300, 2)
+    fauxRGB = np.zeros((3, rRows, rCols), dtype=np.uint8) + 255
+
+    # find a random row / col idx and only apply it to one random band
+    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
+    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
+
+    cBandIdx = np.random.randint(0, 3, 1)[0]
+    fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
+
+    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+
+    assert outputA.shape == (1, rRows, rCols)
+
+    assert np.all(outputA[-1]), "No mask pixels should equal 0"
+
+    # find a random row / col idx and apply it to all bands
+    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
+    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
+
+    fauxRGB[:, rRowIdx, rColIdx] = 0
+
+    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+
+    assert outputA.shape == (1, rRows, rCols)
+
+    createRowIdx, createColIdx = np.where(outputA[-1] == 0)
+
+    assert len(createRowIdx) == 1
+    assert rRowIdx == createRowIdx[0]
+
+    assert len(createColIdx) == 1
+    assert rColIdx == createColIdx[0]
 
