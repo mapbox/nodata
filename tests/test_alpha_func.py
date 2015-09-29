@@ -41,7 +41,7 @@ def test_runner(imagesToTest, expectedOutput, functionArgs):
 
         expectedImg = image_reader(expected)
 
-        outputImg = alphamask.mask(img, args)[:, pad: -pad, pad: -pad]
+        outputImg = alphamask.simple_mask(img, args)[:, pad: -pad, pad: -pad]
 
         assert outputImg.shape == expectedImg.shape
 
@@ -58,7 +58,7 @@ def test_alphamask_good():
     cBandIdx = np.random.randint(0, 3, 1)[0]
     fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
 
-    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
+    outputRGBA = alphamask.simple_mask(fauxRGB, (0, 0, 0))
 
     assert outputRGBA.shape == (4, rRows, rCols)
 
@@ -70,7 +70,7 @@ def test_alphamask_good():
 
     fauxRGB[:, rRowIdx, rColIdx] = 0
 
-    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
+    outputRGBA = alphamask.simple_mask(fauxRGB, (0, 0, 0))
 
     assert outputRGBA.shape == (4, rRows, rCols)
 
@@ -93,7 +93,7 @@ def test_alphamask_good_alphaonly():
     cBandIdx = np.random.randint(0, 3, 1)[0]
     fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
 
-    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+    outputA = alphamask.simple_mask(fauxRGB, (0, 0, 0), False)
 
     assert outputA.shape == (1, rRows, rCols)
 
@@ -105,7 +105,7 @@ def test_alphamask_good_alphaonly():
 
     fauxRGB[:, rRowIdx, rColIdx] = 0
 
-    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+    outputA = alphamask.simple_mask(fauxRGB, (0, 0, 0), False)
 
     assert outputA.shape == (1, rRows, rCols)
 
