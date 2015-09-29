@@ -41,7 +41,7 @@ def test_runner(imagesToTest, expectedOutput, functionArgs):
 
         expectedImg = image_reader(expected)
 
-        outputImg = alphamask.mask(img, args, pad)
+        outputImg = alphamask.mask(img, args)[:, pad: -pad, pad: -pad]
 
         assert outputImg.shape == expectedImg.shape
 
