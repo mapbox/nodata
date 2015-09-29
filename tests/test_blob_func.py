@@ -1,5 +1,5 @@
 import numpy as np
-import nodata.scripts.blob as blob
+import nodata.blob as blob
 import pytest
 
 def test_window_padding():
