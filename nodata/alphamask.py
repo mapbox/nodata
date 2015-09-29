@@ -28,7 +28,7 @@ def simple_mask(data, ndv):
     '''SIMPLE THRESHOLDING APPROACH'''
     depth, rows, cols = data.shape
 
-    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(data.dtype) * np.iinfo(data.dtype).max).reshape(1, rows, cols)
+    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(data.dtype) * np.iinfo(data.dtype).max)
 
     return alpha
 
