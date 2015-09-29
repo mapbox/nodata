@@ -116,4 +116,3 @@ def test_alphamask_good_alphaonly():
 
     assert len(createColIdx) == 1
     assert rColIdx == createColIdx[0]
-

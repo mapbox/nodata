@@ -24,16 +24,13 @@ def _hacky_make_image(labeled_img, u_labels, measures, m_key, dtype=np.int16):
     return out.reshape(labeled_img.shape)
 
 
-def simple_mask(data, ndv, includeRGB=True):
+def simple_mask(data, ndv):
     '''SIMPLE THRESHOLDING APPROACH'''
     depth, rows, cols = data.shape
 
     alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(np.uint8) * 255).reshape(1, rows, cols)
 
-    if includeRGB:
-        return np.concatenate([data, alpha])
-    else:
-        return alpha
+    return alpha
 
 
 def slic_mask(arr, nodata, n_clusters=50, threshold=5):
