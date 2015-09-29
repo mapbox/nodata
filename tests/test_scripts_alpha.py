@@ -1,3 +1,4 @@
+import glob
 import numpy
 import pytest
 import rasterio
@@ -7,10 +8,11 @@ from nodata.scripts.alpha import (
     init_worker, finalize_worker, compute_window_mask)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(
+        scope='function', params=glob.glob('tests/fixtures/alpha/*.tif'))
 def worker(request):
     """This provides the global `src` for compute_window_mask"""
-    init_worker('tests/fixtures/alpha/lossy-curved-edges.tif', {})
+    init_worker(request.param, {})
 
     def fin():
         finalize_worker()
