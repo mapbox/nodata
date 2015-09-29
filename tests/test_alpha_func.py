@@ -38,49 +38,15 @@ def test_runner(imagesToTest, expectedOutput, functionArgs):
 
     for path, expected, args in zip(imagesToTest, expectedOutput, functionArgs):
         img = image_reader(path)
+        depth, rows, cols = img.shape
 
         expectedImg = image_reader(expected)
-
-        outputImg = alphamask.mask(img, args)[:, pad: -pad, pad: -pad]
+        outputImg = np.concatenate([img, alphamask.simple_mask(img, args).reshape((1, rows, cols))])[:, pad: -pad, pad: -pad]
 
         assert outputImg.shape == expectedImg.shape
 
         assert np.array_equal(outputImg, expectedImg)
 
-def test_alphamask_good():
-    rRows, rCols = np.random.randint(3, 300, 2)
-    fauxRGB = np.zeros((3, rRows, rCols), dtype=np.uint8) + 255
-
-    # find a random row / col idx and only apply it to one random band
-    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
-    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
-
-    cBandIdx = np.random.randint(0, 3, 1)[0]
-    fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
-
-    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
-
-    assert outputRGBA.shape == (4, rRows, rCols)
-
-    assert np.all(outputRGBA[-1]), "No mask pixels should equal 0"
-
-    # find a random row / col idx and apply it to all bands
-    rRowIdx = np.random.randint(0, rRows - 1, 1)[0]
-    rColIdx = np.random.randint(0, rCols - 1, 1)[0]
-
-    fauxRGB[:, rRowIdx, rColIdx] = 0
-
-    outputRGBA = alphamask.mask(fauxRGB, (0, 0, 0))
-
-    assert outputRGBA.shape == (4, rRows, rCols)
-
-    createRowIdx, createColIdx = np.where(outputRGBA[-1] == 0)
-
-    assert len(createRowIdx) == 1
-    assert rRowIdx == createRowIdx[0]
-
-    assert len(createColIdx) == 1
-    assert rColIdx == createColIdx[0]
 
 def test_alphamask_good_alphaonly():
     rRows, rCols = np.random.randint(3, 300, 2)
@@ -93,9 +59,9 @@ def test_alphamask_good_alphaonly():
     cBandIdx = np.random.randint(0, 3, 1)[0]
     fauxRGB[cBandIdx, rRowIdx, rColIdx] = 0
 
-    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+    outputA = alphamask.simple_mask(fauxRGB, (0, 0, 0))
 
-    assert outputA.shape == (1, rRows, rCols)
+    assert outputA.shape == (rRows, rCols)
 
     assert np.all(outputA[-1]), "No mask pixels should equal 0"
 
@@ -105,15 +71,14 @@ def test_alphamask_good_alphaonly():
 
     fauxRGB[:, rRowIdx, rColIdx] = 0
 
-    outputA = alphamask.mask(fauxRGB, (0, 0, 0), False)
+    outputA = alphamask.simple_mask(fauxRGB, (0, 0, 0))
 
-    assert outputA.shape == (1, rRows, rCols)
+    assert outputA.shape == (rRows, rCols)
 
-    createRowIdx, createColIdx = np.where(outputA[-1] == 0)
+    createRowIdx, createColIdx = np.where(outputA == 0)
 
     assert len(createRowIdx) == 1
     assert rRowIdx == createRowIdx[0]
 
     assert len(createColIdx) == 1
     assert rColIdx == createColIdx[0]
-

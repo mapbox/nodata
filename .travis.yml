@@ -46,6 +46,7 @@ install:
   # Scipy wheel building may time out without travis_wait, so we give it
   # special treatment.
   - travis_wait pip wheel "$(grep scipy requirements.txt)"
+  - pip install scipy
   - "pip wheel -r requirements.txt"
   # Actually install our dependencies now, this will pull from the directory
   # that the first command placed the Wheels into.
@@ -54,7 +55,7 @@ install:
   - "pip install -e .[test]"
 
 script:
-  - py.test --cov untiler --cov-report term-missing
+  - py.test --cov nodata --cov-report term-missing
 
 after_success:
   - coveralls
