@@ -9,17 +9,10 @@ def image_reader(path):
     with rio.open(path) as src:
         return src.read()
 
-def function_runner(data, testFunction):
-    return testFunction(data)
-
-## TEST A SIMPLE THRESHOLDING APPROACH ##
 def simple_threshold(data, ndv, pad):
+    '''TEST A SIMPLE THRESHOLDING APPROACH'''
     depth, rows, cols = data.shape
-
-    ## cheating at this rn
-    ndv = ndv[0]
-
-    alpha = (np.invert(np.all(data == ndv, axis=0)).astype(np.uint8) * 255).reshape(1, rows, cols)
+    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(np.uint8) * 255).reshape(1, rows, cols)
 
     return np.concatenate([data, alpha])[:, pad: -pad, pad: -pad]
 
@@ -35,7 +28,13 @@ def expectedOutput():
 
 @pytest.fixture
 def functionArgs():
-    return [(0, 0, 0), (0, 0, 0), (255, 255, 255), (0, 0, 0), (255, 255, 255)]
+    return [
+        (0, 0, 0),
+        (0, 0, 0),
+        (255, 255, 255),
+        (0, 0, 0),
+        (255, 255, 255)
+        ]
 
 def test_runner(imagesToTest, expectedOutput, functionArgs):
     assert len(imagesToTest) == len(expectedOutput), "Test fixture length %s must equal expected length %s" % (len(imagesToTest), len(expectedOutput))
