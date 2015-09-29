@@ -3,5 +3,4 @@ scipy
 rio-mucho
 click
 raster-tester
-scipy
 scikit-image
