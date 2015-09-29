@@ -4,17 +4,11 @@ import pytest
 import rasterio as rio
 import numpy as np
 
+import nodata.alphamask as alphamask
 
 def image_reader(path):
     with rio.open(path) as src:
         return src.read()
-
-def simple_threshold(data, ndv, pad):
-    '''TEST A SIMPLE THRESHOLDING APPROACH'''
-    depth, rows, cols = data.shape
-    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(np.uint8) * 255).reshape(1, rows, cols)
-
-    return np.concatenate([data, alpha])[:, pad: -pad, pad: -pad]
 
 @pytest.fixture
 def imagesToTest():
@@ -47,7 +41,7 @@ def test_runner(imagesToTest, expectedOutput, functionArgs):
 
         expectedImg = image_reader(expected)
 
-        outputImg = simple_threshold(img, args, pad)
+        outputImg = alphamask.mask(img, args, pad)
 
         assert outputImg.shape == expectedImg.shape
 
