@@ -5,6 +5,19 @@
 ## Usage
 
 ### Nodata blobbing
+
+```
+        UNBLOBBED         BLOBBED
+
+ALPHA -------------    ~-----------~
+      |           |    |           |
+RGB   -------------  ~~-------------~~
+                     ^               ^
+                     |_ _ _ _ _ _ _ _|
+                      Lossy Artifacts
+                           Hidden
+```
+
 ```
 nodata blob [OPTIONS] SRC_PATH DST_PATH
 
