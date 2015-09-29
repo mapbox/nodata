@@ -34,6 +34,13 @@ def simple_mask(data, ndv):
 
 
 def slic_mask(arr, nodata, n_clusters=50, threshold=5):
+    """
+    Uses @dnomadb algorithm, roughly:
+        - cluster image using SLIC (k-means)
+        - pull out contiguous regions and find aggregate stats
+        - select regions that are likely nodata
+        - fill inclusions
+    """
     assert arr.shape[0] == len(nodata)
     near_nodata = _diff_nodata(arr, nodata)
     clusters = slic(near_nodata, n_clusters)
