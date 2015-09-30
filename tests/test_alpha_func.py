@@ -1,5 +1,5 @@
-import os, re
-
+import os
+import re
 import pytest
 import rasterio as rio
 import numpy as np
@@ -82,3 +82,31 @@ def test_alphamask_good_alphaonly():
 
     assert len(createColIdx) == 1
     assert rColIdx == createColIdx[0]
+
+def test_all_valid():
+    all_valid = alphamask.all_valid
+    ndv = (255, 255, 255)
+
+    arr = np.random.randint(200, size=(3, 2, 2))
+    assert all_valid(arr, ndv)
+
+    arr[:, 1, 1] = 255
+    assert not all_valid(arr, ndv)
+
+    arr[:, 1, 1] = 254
+    assert not all_valid(arr, ndv, threshold=1)
+
+
+def test_all_valid_edges():
+    all_valid_edges = alphamask.all_valid_edges
+    ndv = (255, 255, 255)
+
+    arr = np.random.randint(200, size=(3, 3, 3))
+    assert all_valid_edges(arr, ndv)
+
+    arr[:, 0, 0] = 255
+    assert not all_valid_edges(arr, ndv)
+
+    arr[:, 0, 0] = 0
+    arr[:, 1, 1] = 254  # center nodata doesn't invalidate
+    assert all_valid_edges(arr, ndv, threshold=1)
