@@ -1,6 +1,7 @@
 import click
 import nodata
 
+
 @click.group()
 def cli():
     """There's no data like nodata!"""
@@ -26,5 +27,16 @@ def cli():
 def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy):
     """"""
     nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy)
+
+@click.command(short_help="RGB + NDV = RGBA")
+@click.argument('src_path', type=click.Path(exists=True))
+@click.argument('dst_path', type=click.Path(exists=False))
+@click.argument('ndv', nargs=3, type=click.Choice([int, float]))
+@click.option('--padding', type=int, default=0)
+@click.option('--mode', type=str, default='exact')
+def alpha(src_path, dst_path, ndv, padding, mode):
+    return None
+
+cli.add_command(alpha)
 
 cli.add_command(blob)
