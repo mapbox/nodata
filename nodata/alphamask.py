@@ -33,7 +33,7 @@ def simple_mask(data, ndv):
     return alpha
 
 
-def slic_mask(arr, nodata, n_clusters=50, threshold=5):
+def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False):
     """
     Uses @dnomadb algorithm, roughly:
         - cluster image using SLIC (k-means)
@@ -44,8 +44,12 @@ def slic_mask(arr, nodata, n_clusters=50, threshold=5):
     assert arr.shape[0] == len(nodata)
     near_nodata = _diff_nodata(arr, nodata)
     clusters = slic(near_nodata, n_clusters)
-    labeled = measure.label(clusters + 1)
+    labeled = measure.label(clusters) + 1
     measures = measure.regionprops(labeled, intensity_image=near_nodata, cache=True)
     mean_intensity = _hacky_make_image(labeled, np.unique(labeled), measures, 'mean_intensity')
     mask = binary_fill_holes(np.invert(binary_fill_holes(mean_intensity >= threshold)))
-    return mask
+    if debug:
+        d = dict([(m.label, m.mean_intensity) for m in measures])
+        return mask.astype('uint8'), labeled.astype('uint32'), mean_intensity.astype('uint32'), d
+    else:
+        return mask.astype('uint8')
