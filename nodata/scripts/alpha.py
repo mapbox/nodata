@@ -20,6 +20,7 @@ def init_worker(path, func):
     global mask_function, src_dataset
     mask_function = func
     src_dataset = rasterio.open(path)
+    print src_dataset
 
 
 def finalize_worker():
@@ -31,7 +32,7 @@ def finalize_worker():
 
 # The following function is executed by worker processes.
 
-def compute_window_mask(args):
+def compute_window_masked_rgba(args):
     """Execute the given function with keyword arguments to compute a
     valid data mask.
 
@@ -40,7 +41,9 @@ def compute_window_mask(args):
     window, nodata, extra_args = args
     global mask_function, src_dataset
     source = src_dataset.read(window=window, boundless=True)
-    return window, zlib.compress(mask_function(source, nodata, **extra_args))
+    mask = mask_function(source, nodata, **extra_args)
+    rgba = numpy.vstack((source, mask))
+    return window, zlib.compress(rgba)
 
 
 def all_valid(arr, nodata, **kwargs):
@@ -72,17 +75,19 @@ class NodataPoolMan:
             num_workers or cpu_count()-1, init_worker, (input_path, func),
             max_tasks)
 
-    def mask(self, windows, **kwargs):
+    def add_mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
 
-        The keyword arguments will be passed as keyword arguments to the 
+        The keyword arguments will be passed as keyword arguments to the
         manager's mask algorithm function.
 
         Yields window, ndarray pairs.
         """
         iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
-        for out_window, data in self.pool.imap_unordered(
-                compute_window_mask, iterargs):
+        # for out_window, data in self.pool.imap_unordered(
+        #         compute_window_masked_rgba, iterargs):
+        for args in iterargs:
+            out_window, data = compute_window_masked_rgba(args)
             yield out_window, numpy.fromstring(
                                 zlib.decompress(data), self.dtype).reshape(
                                     rasterio.window_shape(out_window))

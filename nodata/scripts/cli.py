@@ -28,3 +28,29 @@ def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, ma
     nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy)
 
 cli.add_command(blob)
+
+
+@click.command(short_help="Take RGB image and create RGBA with masked Alpha band")
+@click.argument('src_path', type=click.Path(exists=True))
+@click.argument('dst_path', type=click.Path(exists=False))
+def alpha(src_path, dst_path):
+    """"""
+    from nodata.alphamask import simple_mask, slic_mask
+    from .alpha import NodataPoolMan
+    import rasterio
+
+    func = simple_mask
+
+    with rasterio.open(src_path, 'r') as src:
+        profile = src.profile
+        profile['count'] += 1
+        profile['transform'] = src.affine
+        ndv = src.nodata or (255, 255, 255)  # TODO arg
+        windows =  [[window, ij] for ij, window in src.block_windows()]
+
+    ndpm = NodataPoolMan(src_path, func, ndv)
+    with rasterio.open(dst_path, 'w', **profile) as dst:
+        for win, data in ndpm.add_mask(windows):
+            dst.write(data, window=win)
+
+cli.add_command(alpha)
