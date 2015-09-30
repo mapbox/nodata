@@ -37,15 +37,13 @@ def compute_window_mask(args):
 
     Returns the window and mask as deflated bytes.
     """
-    window = args[0]
-    nodata = args[1]
-    extra_args = args[2:]
+    window, nodata, extra_args = args
     global mask_function, src_dataset
     source = src_dataset.read(window=window, boundless=True)
-    return window, zlib.compress(mask_function(source, nodata, *extra_args))
+    return window, zlib.compress(mask_function(source, nodata, **extra_args))
 
 
-def all_valid(arr, nodata, *args):
+def all_valid(arr, nodata, **kwargs):
     """Return an all-valid mask of the same shape and type as the
     given array"""
     return 255 * numpy.ones_like(arr[0])
@@ -74,12 +72,15 @@ class NodataPoolMan:
             num_workers or cpu_count()-1, init_worker, (input_path, func),
             max_tasks)
 
-    def mask(self, windows, *extra_args):
+    def mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
-        
+
+        The keyword arguments will be passed as keyword arguments to the 
+        manager's mask algorithm function.
+
         Yields window, ndarray pairs.
         """
-        iterargs = izip(windows, repeat(self.nodata), repeat(extra_args))
+        iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
         for out_window, data in self.pool.imap_unordered(
                 compute_window_mask, iterargs):
             yield out_window, numpy.fromstring(
