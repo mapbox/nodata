@@ -82,3 +82,16 @@ def test_alphamask_good_alphaonly():
 
     assert len(createColIdx) == 1
     assert rColIdx == createColIdx[0]
+
+def test_all_valid():
+    all_valid = alphamask.all_valid
+    ndv = (255, 255, 255)
+
+    arr = np.random.randint(200, size=(3,2,2))
+    assert all_valid(arr, ndv)
+
+    arr[:, 1, 1] = 255
+    assert not all_valid(arr, ndv)
+
+    arr[:, 1, 1] = 254
+    assert not all_valid(arr, ndv, threshold=1)
