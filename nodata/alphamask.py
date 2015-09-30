@@ -24,6 +24,11 @@ def _hacky_make_image(labeled_img, u_labels, measures, m_key, dtype=np.int16):
     return out.reshape(labeled_img.shape)
 
 
+def all_valid(data, ndv, threshold=0):
+    diff = _diff_nodata(data, ndv)
+    return np.all(diff > (threshold * data.shape[0]))
+
+
 def simple_mask(data, ndv):
     '''SIMPLE THRESHOLDING APPROACH'''
     depth, rows, cols = data.shape
@@ -33,19 +38,19 @@ def simple_mask(data, ndv):
     return alpha
 
 
-def slic_mask(arr, nodata, n_clusters=50, threshold=5):
+def slic_mask(arr, ndv, n_clusters=50, threshold=5):
     """
     Uses @dnomadb algorithm, roughly:
         - cluster image using SLIC (k-means)
         - pull out contiguous regions and find aggregate stats
-        - select regions that are likely nodata
+        - select regions that are likely ndv
         - fill inclusions
     """
-    assert arr.shape[0] == len(nodata)
-    near_nodata = _diff_nodata(arr, nodata)
-    clusters = slic(near_nodata, n_clusters)
+    assert arr.shape[0] == len(ndv)
+    near_ndv = _diff_ndv(arr, ndv)
+    clusters = slic(near_ndv, n_clusters)
     labeled = measure.label(clusters + 1)
-    measures = measure.regionprops(labeled, intensity_image=near_nodata, cache=True)
+    measures = measure.regionprops(labeled, intensity_image=near_ndv, cache=True)
     mean_intensity = _hacky_make_image(labeled, np.unique(labeled), measures, 'mean_intensity')
     mask = binary_fill_holes(np.invert(binary_fill_holes(mean_intensity >= threshold)))
     return mask
