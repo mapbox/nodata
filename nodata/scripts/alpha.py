@@ -59,6 +59,12 @@ class NodataPoolMan:
         self.input_path = input_path
         self.func = func
         self.nodata = nodata
+
+        # Peek in the source file for metadata. We could even get the nodata
+        # value from here in some cases.
+        with rasterio.open(input_path) as src:
+            self.dtype = src.dtypes[0]
+
         self.pool = Pool(
             num_workers or cpu_count()-1, init_worker, (input_path, func),
             max_tasks)
@@ -72,5 +78,5 @@ class NodataPoolMan:
         for out_window, data in self.pool.imap_unordered(
                 compute_window_mask, iterargs):
             yield out_window, numpy.fromstring(
-                                zlib.decompress(data), 'uint8').reshape(
+                                zlib.decompress(data), self.dtype).reshape(
                                     rasterio.window_shape(out_window))
