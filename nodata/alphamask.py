@@ -24,6 +24,30 @@ def _hacky_make_image(labeled_img, u_labels, measures, m_key, dtype=np.int16):
     return out.reshape(labeled_img.shape)
 
 
+def all_valid(data, ndv, threshold=0):
+    """Test if all the data in the entire array are valid data
+    within the specified threshold"""
+    diff = _diff_nodata(data, ndv)
+    return np.all(diff > (threshold * data.shape[0]))
+
+
+def _edges(arr):
+    left = arr[0, :]
+    right = arr[-1, :]
+    top = arr[:, 0]
+    bottom = arr[:, -1]
+    edges = np.concatenate([left, right, top, bottom])
+    return edges
+
+
+def all_valid_edges(data, ndv, threshold=0):
+    """Test if all the data on the edges are valid data
+    within the specified threshold"""
+    diff = _diff_nodata(data, ndv)
+    edges = _edges(diff)
+    return np.all(edges > (threshold * data.shape[0]))
+
+
 def simple_mask(data, ndv):
     '''SIMPLE THRESHOLDING APPROACH'''
     depth, rows, cols = data.shape
@@ -38,7 +62,7 @@ def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False):
     Uses @dnomadb algorithm, roughly:
         - cluster image using SLIC (k-means)
         - pull out contiguous regions and find aggregate stats
-        - select regions that are likely nodata
+        - select regions that are likely ndv
         - fill inclusions
     """
     assert arr.shape[0] == len(nodata)
