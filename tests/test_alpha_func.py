@@ -110,3 +110,18 @@ def test_all_valid_edges():
     arr[:, 0, 0] = 0
     arr[:, 1, 1] = 254  # center nodata doesn't invalidate
     assert all_valid_edges(arr, ndv, threshold=1)
+
+
+def test_slic_mask():
+    slic_mask = alphamask.slic_mask
+    arr = np.random.randint(200, size=(3, 100, 100))
+    ndv = (255, 255, 255)
+
+    mask = slic_mask(arr, ndv)
+    assert mask.shape == (arr.shape[1], arr.shape[2])
+    assert np.all(mask == 255)
+
+    arr[:, :, -1] = 255
+    mask = slic_mask(arr, ndv)
+    assert np.all(mask[0:-1, 0:-1] == 255)
+    assert np.all(mask[-1, -1] == 0)

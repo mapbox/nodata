@@ -49,11 +49,10 @@ def all_valid_edges(data, ndv, threshold=0):
 
 
 def simple_mask(data, ndv):
-    '''SIMPLE THRESHOLDING APPROACH'''
+    '''Exact nodata masking'''
     depth, rows, cols = data.shape
-
-    alpha = (np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(data.dtype) * np.iinfo(data.dtype).max)
-
+    nd = np.iinfo(data.dtype).max
+    alpha = np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(data.dtype) * nd
     return alpha
 
 
@@ -72,6 +71,8 @@ def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False):
     measures = measure.regionprops(labeled, intensity_image=near_nodata, cache=True)
     mean_intensity = _hacky_make_image(labeled, np.unique(labeled), measures, 'mean_intensity')
     mask = binary_fill_holes(np.invert(binary_fill_holes(mean_intensity >= threshold)))
+    nd = np.iinfo(arr.dtype).max
+    mask = np.invert(mask) * nd
     if debug:
         d = dict([(m.label, m.mean_intensity) for m in measures])
         return mask.astype('uint8'), labeled.astype('uint32'), mean_intensity.astype('uint32'), d
