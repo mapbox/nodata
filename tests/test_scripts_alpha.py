@@ -37,13 +37,28 @@ def test_compute_window_mask(worker):
             rasterio.window_shape(out_window)) == 255).all()
 
 
-@pytest.mark.parametrize("input_path", glob.glob('tests/fixtures/alpha/*.tif'))
-def test_pool_man(input_path):
+@pytest.mark.parametrize(
+        "input_path", glob.glob('tests/fixtures/alpha/*.tif'))
+def test_pool_man_mask(input_path):
     """NodataPoolMan initializes and computes mask of a file"""
     manager = NodataPoolMan(input_path, all_valid, 0)
     assert manager.input_path == input_path
     assert manager.nodata == 0
     result = manager.mask(windows=[((0, 100), (0, 100))])
+    window, arr = next(result)
+    assert window == ((0, 100), (0, 100))
+    assert (arr == 255).all()
+    with pytest.raises(StopIteration):
+        next(result)
+
+
+@pytest.mark.parametrize("keywords", [
+    {'padding': 0}])
+def test_pool_man_mask_keywords(keywords):
+    """NodataPoolMan initializes and computes mask of a file"""
+    manager = NodataPoolMan(
+        'tests/fixtures/alpha/lossy-curved-edges.tif', all_valid, 0)
+    result = manager.mask(windows=[((0, 100), (0, 100))], **keywords)
     window, arr = next(result)
     assert window == ((0, 100), (0, 100))
     assert (arr == 255).all()
