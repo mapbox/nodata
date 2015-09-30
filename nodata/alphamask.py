@@ -47,7 +47,7 @@ def slic_mask(arr, ndv, n_clusters=50, threshold=5):
         - fill inclusions
     """
     assert arr.shape[0] == len(ndv)
-    near_ndv = _diff_ndv(arr, ndv)
+    near_ndv = _diff_nodata(arr, ndv)
     clusters = slic(near_ndv, n_clusters)
     labeled = measure.label(clusters + 1)
     measures = measure.regionprops(labeled, intensity_image=near_ndv, cache=True)
