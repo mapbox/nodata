@@ -25,8 +25,27 @@ def _hacky_make_image(labeled_img, u_labels, measures, m_key, dtype=np.int16):
 
 
 def all_valid(data, ndv, threshold=0):
+    """Test if all the data in the entire array are valid data
+    within the specified threshold"""
     diff = _diff_nodata(data, ndv)
     return np.all(diff > (threshold * data.shape[0]))
+
+
+def _edges(arr):
+    left = arr[0, :]
+    right = arr[-1, :]
+    top = arr[:, 0]
+    bottom = arr[:, -1]
+    edges = np.concatenate([left, right, top, bottom])
+    return edges
+
+
+def all_valid_edges(data, ndv, threshold=0):
+    """Test if all the data on the edges are valid data
+    within the specified threshold"""
+    diff = _diff_nodata(data, ndv)
+    edges = _edges(diff)
+    return np.all(edges > (threshold * data.shape[0]))
 
 
 def simple_mask(data, ndv):
