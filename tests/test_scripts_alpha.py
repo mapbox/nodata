@@ -6,19 +6,20 @@ import pytest
 import rasterio
 
 from nodata.scripts.alpha import (
-    init_worker, finalize_worker, compute_window_mask, NodataPoolMan)
+    all_valid, init_worker, finalize_worker, compute_window_mask,
+    NodataPoolMan)
 
 
-def mask_func(arr, nodata, *args):
-    """Return an all-valid mask of the same shape and type as the input"""
-    return 255 * numpy.ones_like(arr[0])
+def test_all_valid():
+    assert (
+        all_valid(numpy.empty((2, 2), dtype='uint8'), 0) == 255).all()
 
 
 @pytest.fixture(
         scope='function', params=glob.glob('tests/fixtures/alpha/*.tif'))
 def worker(request):
     """This provides the global `src` for compute_window_mask"""
-    init_worker(request.param, mask_func)
+    init_worker(request.param, all_valid)
 
     def fin():
         finalize_worker()
@@ -39,7 +40,7 @@ def test_compute_window_mask(worker):
 @pytest.mark.parametrize("input_path", glob.glob('tests/fixtures/alpha/*.tif'))
 def test_pool_man(input_path):
     """NodataPoolMan initializes and computes mask of a file"""
-    manager = NodataPoolMan(input_path, mask_func, 0)
+    manager = NodataPoolMan(input_path, all_valid, 0)
     assert manager.input_path == input_path
     assert manager.nodata == 0
     result = manager.mask(windows=[((0, 100), (0, 100))])

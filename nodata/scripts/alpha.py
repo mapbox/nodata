@@ -32,8 +32,8 @@ def finalize_worker():
 # The following function is executed by worker processes.
 
 def compute_window_mask(args):
-    """Execute the given function with keyword arguments to compute a valid
-    data mask.
+    """Execute the given function with keyword arguments to compute a
+    valid data mask.
 
     Returns the window and mask as deflated bytes.
     """
@@ -44,6 +44,11 @@ def compute_window_mask(args):
     source = src_dataset.read(window=window, boundless=True)
     return window, zlib.compress(mask_function(source, nodata, *extra_args))
 
+
+def all_valid(arr, nodata, *args):
+    """Return an all-valid mask of the same shape and type as the
+    given array"""
+    return 255 * numpy.ones_like(arr[0])
 
 
 class NodataPoolMan:
@@ -60,8 +65,8 @@ class NodataPoolMan:
         self.func = func
         self.nodata = nodata
 
-        # Peek in the source file for metadata. We could even get the nodata
-        # value from here in some cases.
+        # Peek in the source file for metadata. We could even get the
+        # nodata value from here in some cases.
         with rasterio.open(input_path) as src:
             self.dtype = src.dtypes[0]
 
