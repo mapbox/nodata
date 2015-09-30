@@ -30,7 +30,7 @@ def worker(request):
 def test_compute_window_mask(worker):
     """Get an all-valid mask for one window"""
     in_window = ((0, 100), (0, 100))
-    out_window, data = compute_window_mask((in_window, 0))
+    out_window, data = compute_window_mask((in_window, 0, {}))
     assert in_window == out_window
     assert (numpy.fromstring(
         zlib.decompress(data), 'uint8').reshape(
