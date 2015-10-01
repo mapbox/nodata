@@ -6,7 +6,7 @@ import pytest
 import rasterio
 
 from nodata.scripts.alpha import (
-    all_valid, init_worker, finalize_worker, compute_window_mask,
+    all_valid, init_worker, finalize_worker, compute_window_rgba,
     NodataPoolMan)
 
 
@@ -30,11 +30,11 @@ def worker(request):
 def test_compute_window_mask(worker):
     """Get an all-valid mask for one window"""
     in_window = ((0, 100), (0, 100))
-    out_window, data = compute_window_mask((in_window, 0, {}))
+    out_window, data = compute_window_rgba((in_window, 0, {}))
+    h, w = rasterio.window_shape(out_window)
     assert in_window == out_window
     assert (numpy.fromstring(
-        zlib.decompress(data), 'uint8').reshape(
-            rasterio.window_shape(out_window)) == 255).all()
+        zlib.decompress(data), 'uint8').reshape((4, h, w))[-1] == 255).all()
 
 
 @pytest.mark.parametrize(
@@ -47,7 +47,7 @@ def test_pool_man_mask(input_path):
     result = manager.mask(windows=[((0, 100), (0, 100))])
     window, arr = next(result)
     assert window == ((0, 100), (0, 100))
-    assert (arr == 255).all()
+    assert (arr[-1] == 255).all()
     with pytest.raises(StopIteration):
         next(result)
 
@@ -61,6 +61,6 @@ def test_pool_man_mask_keywords(keywords):
     result = manager.mask(windows=[((0, 100), (0, 100))], **keywords)
     window, arr = next(result)
     assert window == ((0, 100), (0, 100))
-    assert (arr == 255).all()
+    assert (arr[-1] == 255).all()
     with pytest.raises(StopIteration):
         next(result)

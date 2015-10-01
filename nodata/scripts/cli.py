@@ -67,7 +67,7 @@ def alpha(src_path, dst_path, ndv, mode, padding, jobs):
     profile['count'] += 1
     profile['transform'] = src.affine
     with rasterio.open(dst_path, 'w', **profile) as dst:
-        for win, data in ndpm.add_mask(windows, padding=padding):
+        for win, data in ndpm.mask(windows, padding=padding):
             dst.write(data, window=win)
 
 cli.add_command(alpha)

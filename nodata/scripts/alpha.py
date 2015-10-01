@@ -30,7 +30,7 @@ def finalize_worker():
 
 # The following function is executed by worker processes.
 
-def compute_window_masked_rgba(args):
+def compute_window_rgba(args):
     """Execute the given function with keyword arguments to compute a
     valid data mask.
 
@@ -97,12 +97,12 @@ class NodataPoolMan:
         init_worker(input_path, func)
 
     def _proc_data(self, out_window, data):
-        w, h = rasterio.window_shape(out_window)
+        h, w = rasterio.window_shape(out_window)
         b = self.count + 1
         arr = numpy.fromstring(zlib.decompress(data), self.dtype)
-        return out_window, arr.reshape((b, w, h))
+        return out_window, arr.reshape((b, h, w))
 
-    def add_mask(self, windows, **kwargs):
+    def mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
 
         The keyword arguments will be passed as keyword arguments to the
@@ -114,9 +114,9 @@ class NodataPoolMan:
 
         if self.pool:
             for out_window, data in self.pool.imap_unordered(
-                    compute_window_masked_rgba, iterargs):
+                    compute_window_rgba, iterargs):
                 yield self._proc_data(out_window, data)
         else:
             for args in iterargs:
-                out_window, data = compute_window_masked_rgba(args)
+                out_window, data = compute_window_rgba(args)
                 yield self._proc_data(out_window, data)
