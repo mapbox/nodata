@@ -31,20 +31,20 @@ def all_valid(data, ndv, threshold=0):
     return np.all(diff > (threshold * data.shape[0]))
 
 
-def _edges(arr):
-    left = arr[0, :]
-    right = arr[-1, :]
-    top = arr[:, 0]
-    bottom = arr[:, -1]
+def _edges(arr, padding):
+    left = arr[(0 + padding), :]
+    right = arr[(-1 - padding), :]
+    top = arr[:, (0 + padding)]
+    bottom = arr[:, (-1 - padding)]
     edges = np.concatenate([left, right, top, bottom])
     return edges
 
 
-def all_valid_edges(data, ndv, threshold=0):
+def all_valid_edges(data, ndv, threshold=0, padding=0):
     """Test if all the data on the edges are valid data
     within the specified threshold"""
     diff = _diff_nodata(data, ndv)
-    edges = _edges(diff)
+    edges = _edges(diff, padding)
     return np.all(edges > (threshold * data.shape[0]))
 
 

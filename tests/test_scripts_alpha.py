@@ -6,20 +6,25 @@ import pytest
 import rasterio
 
 from nodata.scripts.alpha import (
-    all_valid, init_worker, finalize_worker, compute_window_rgba,
-    NodataPoolMan)
+    init_worker, finalize_worker, compute_window_rgba, NodataPoolMan)
 
 
-def test_all_valid():
+def dummy_mask(arr, nodata, **kwargs):
+    """Return an all-valid mask of the same shape and type as the
+    given array"""
+    return 255 * numpy.ones_like(arr[0])
+
+
+def test_dummy_mask():
     assert (
-        all_valid(numpy.empty((2, 2), dtype='uint8'), 0) == 255).all()
+        dummy_mask(numpy.empty((2, 2), dtype='uint8'), 0) == 255).all()
 
 
 @pytest.fixture(
         scope='function', params=glob.glob('tests/fixtures/alpha/*.tif'))
 def worker(request):
     """This provides the global `src` for compute_window_mask"""
-    init_worker(request.param, all_valid)
+    init_worker(request.param, dummy_mask)
 
     def fin():
         finalize_worker()
@@ -27,8 +32,8 @@ def worker(request):
     request.addfinalizer(fin)
 
 
-def test_compute_window_mask(worker):
-    """Get an all-valid mask for one window"""
+def test_compute_window_rgba(worker):
+    """Get an all-valid rgba for one window"""
     in_window = ((0, 100), (0, 100))
     out_window, data = compute_window_rgba((in_window, 0, {}))
     h, w = rasterio.window_shape(out_window)
@@ -41,9 +46,9 @@ def test_compute_window_mask(worker):
         "input_path", glob.glob('tests/fixtures/alpha/*.tif'))
 def test_pool_man_mask(input_path):
     """NodataPoolMan initializes and computes mask of a file"""
-    manager = NodataPoolMan(input_path, all_valid, 0)
+    manager = NodataPoolMan(input_path, dummy_mask, 0)
     assert manager.input_path == input_path
-    assert manager.nodata == 0
+    assert manager.ndv == 0
     result = manager.mask(windows=[((0, 100), (0, 100))])
     window, arr = next(result)
     assert window == ((0, 100), (0, 100))
@@ -57,7 +62,7 @@ def test_pool_man_mask(input_path):
 def test_pool_man_mask_keywords(keywords):
     """NodataPoolMan initializes and computes mask of a file"""
     manager = NodataPoolMan(
-        'tests/fixtures/alpha/lossy-curved-edges.tif', all_valid, 0)
+        'tests/fixtures/alpha/lossy-curved-edges.tif', dummy_mask, 0)
     result = manager.mask(windows=[((0, 100), (0, 100))], **keywords)
     window, arr = next(result)
     assert window == ((0, 100), (0, 100))

@@ -33,7 +33,7 @@ cli.add_command(blob)
 @click.command(short_help="Take RGB image and create RGBA with masked Alpha band")
 @click.argument('src_path', type=click.Path(exists=True))
 @click.argument('dst_path', type=click.Path(exists=False))
-@click.option('--ndv', type=int)
+@click.option('--ndv', type=int, default=None)
 @click.option('--mode', type=click.Choice(['exact', 'slic']), default='exact')
 @click.option('--padding', type=int, default=0)
 @click.option('--jobs', '-j', type=int, default=None)
@@ -50,17 +50,12 @@ def alpha(src_path, dst_path, ndv, mode, padding, jobs):
 
     with rasterio.open(src_path, 'r') as src:
         profile = src.profile
-        count = src.count
         source_ndv = src.nodata
         windows = [window for ij, window in src.block_windows()]
 
-    if not ndv and not source_ndv:
+    ndv = ndv or source_ndv
+    if not ndv:
         raise click.UsageError("Dataset nodata is not defined, must supply --ndv")
-
-    if ndv and isinstance(ndv, int):
-        ndv = tuple([ndv] * count)
-    else:
-        ndv = tuple(source_ndv)
 
     ndpm = NodataPoolMan(src_path, func, ndv, num_workers=jobs)
 

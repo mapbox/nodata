@@ -1,5 +1,6 @@
 from itertools import izip, repeat
 from multiprocessing import cpu_count, Pool
+from nodata.alphamask import all_valid_edges
 import zlib
 
 import numpy
@@ -36,7 +37,7 @@ def compute_window_rgba(args):
 
     Returns the window and mask as deflated bytes.
     """
-    window, nodata, extra_args = args
+    window, ndv, extra_args = args
     global mask_function, src_dataset
 
     padding = int(extra_args.get('padding', 0))
@@ -50,20 +51,26 @@ def compute_window_rgba(args):
         read_window = window
 
     source = src_dataset.read(window=read_window, boundless=True)
-    result = mask_function(source, nodata, **extra_args)
+
+    # Normalize nodata, if single number -> make a tuple
+    if isinstance(ndv, (int, float)):
+        ndv = tuple([ndv] * source.shape[0])
+
+    if all_valid_edges(source, ndv, padding=padding):
+        # Skip mask_function and fill mask with valid data (255 or dtype max)
+        h, w = rasterio.window_shape(read_window)
+        nd = numpy.iinfo(source.dtype).max
+        mask = (numpy.ones((h, w)) * nd).astype('uint8')
+    else:
+        # Run the masking function
+        mask = mask_function(source, ndv, **extra_args)
 
     if padding:
-        result = result[:, padding:-padding, padding:-padding]
+        mask = mask[:, padding:-padding, padding:-padding]
+    mask3d = mask[numpy.newaxis, :]
 
-    mask3d = result[numpy.newaxis, :]
     rgba = numpy.concatenate((source, mask3d), axis=0)
     return window, zlib.compress(rgba)
-
-
-def all_valid(arr, nodata, **kwargs):
-    """Return an all-valid mask of the same shape and type as the
-    given array"""
-    return 255 * numpy.ones_like(arr[0])
 
 
 class NodataPoolMan:
@@ -73,15 +80,15 @@ class NodataPoolMan:
     windows of a dataset.
     """
 
-    def __init__(self, input_path, func, nodata, num_workers=None,
+    def __init__(self, input_path, func, ndv, num_workers=None,
                  max_tasks=100):
         """Create a pool of workers to process window masks"""
         self.input_path = input_path
         self.func = func
-        self.nodata = nodata
+        self.ndv = ndv
 
         # Peek in the source file for metadata. We could even get the
-        # nodata value from here in some cases.
+        # ndv value from here in some cases.
         with rasterio.open(input_path) as src:
             self.dtype = src.dtypes[0]
             self.count = src.count
@@ -110,7 +117,7 @@ class NodataPoolMan:
 
         Yields window, ndarray pairs.
         """
-        iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
+        iterargs = izip(windows, repeat(self.ndv), repeat(kwargs))
 
         if self.pool:
             for out_window, data in self.pool.imap_unordered(
