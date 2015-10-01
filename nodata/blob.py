@@ -72,7 +72,9 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     return img
 
-def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, maskThreshold, workers, alphafy):
+
+def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
+        creation_options, maskThreshold, workers, alphafy):
 
     with rio.open(src_path) as src:
         windows = [
@@ -80,9 +82,6 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
         ]
 
         options = src.meta.copy()
-
-        if compress:
-            options.update(compress=compress)
 
         outNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
@@ -93,6 +92,9 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compr
             count=outCount,
             nodata=outNodata
             )
+
+        # Update withcreation options like 'compress': 'lzw'.
+        options.update(**creation_options)
 
         if bidx:
             try:
