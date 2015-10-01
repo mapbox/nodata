@@ -39,9 +39,24 @@ def compute_window_masked_rgba(args):
     """
     window, nodata, extra_args = args
     global mask_function, src_dataset
-    source = src_dataset.read(window=window, boundless=True)
-    mask = mask_function(source, nodata, **extra_args)
-    mask3d = mask[numpy.newaxis,:]
+
+    padding = int(extra_args.get('padding', 0))
+
+    if padding:
+        start, stop = zip(*window)
+        start = [v - 10 for v in start]
+        stop = [v + 10 for v in stop]
+        read_window = zip(*[start, stop])
+    else:
+        read_window = window
+
+    source = src_dataset.read(window=read_window, boundless=True)
+    result = mask_function(source, nodata, **extra_args)
+
+    if padding:
+        result = result[:, padding:-padding, padding:-padding]
+
+    mask3d = result[numpy.newaxis,:]
     rgba = numpy.concatenate((source, mask3d), axis=0)
     return window, zlib.compress(rgba)
 
