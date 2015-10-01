@@ -1,6 +1,5 @@
 from itertools import izip, repeat
 from multiprocessing import cpu_count, Pool
-import sys
 import zlib
 
 import numpy
@@ -56,7 +55,7 @@ def compute_window_masked_rgba(args):
     if padding:
         result = result[:, padding:-padding, padding:-padding]
 
-    mask3d = result[numpy.newaxis,:]
+    mask3d = result[numpy.newaxis, :]
     rgba = numpy.concatenate((source, mask3d), axis=0)
     return window, zlib.compress(rgba)
 
@@ -75,7 +74,7 @@ class NodataPoolMan:
     """
 
     def __init__(self, input_path, func, nodata, num_workers=None,
-            max_tasks=100):
+                 max_tasks=100):
         """Create a pool of workers to process window masks"""
         self.input_path = input_path
         self.func = func
@@ -87,10 +86,21 @@ class NodataPoolMan:
             self.dtype = src.dtypes[0]
             self.count = src.count
 
-        self.pool = Pool(
-            num_workers or cpu_count()-1, init_worker, (input_path, func),
-            max_tasks)
+        jobs = num_workers or cpu_count()-1
+        if jobs > 1:
+            self.pool = Pool(jobs, init_worker,
+                             (input_path, func),
+                             max_tasks)
+        else:
+            self.pool = None
+
         init_worker(input_path, func)
+
+    def _proc_data(self, out_window, data):
+        w, h = rasterio.window_shape(out_window)
+        b = self.count + 1
+        arr = numpy.fromstring(zlib.decompress(data), self.dtype)
+        return out_window, arr.reshape((b, w, h))
 
     def add_mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
@@ -101,13 +111,12 @@ class NodataPoolMan:
         Yields window, ndarray pairs.
         """
         iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
-        for out_window, data in self.pool.imap_unordered(
-                compute_window_masked_rgba, iterargs):
-        # for args in iterargs:
-            # out_window, data = compute_window_masked_rgba(args)
 
-            w, h = rasterio.window_shape(out_window)
-            b = self.count + 1
-
-            arr = numpy.fromstring(zlib.decompress(data), self.dtype)
-            yield out_window, arr.reshape((b, w, h))
+        if self.pool:
+            for out_window, data in self.pool.imap_unordered(
+                    compute_window_masked_rgba, iterargs):
+                yield self._proc_data(out_window, data)
+        else:
+            for args in iterargs:
+                out_window, data = compute_window_masked_rgba(args)
+                yield self._proc_data(out_window, data)

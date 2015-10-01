@@ -48,7 +48,7 @@ def all_valid_edges(data, ndv, threshold=0):
     return np.all(edges > (threshold * data.shape[0]))
 
 
-def simple_mask(data, ndv):
+def simple_mask(data, ndv, **kwargs):
     '''Exact nodata masking'''
     depth, rows, cols = data.shape
     nd = np.iinfo(data.dtype).max
@@ -56,7 +56,7 @@ def simple_mask(data, ndv):
     return alpha
 
 
-def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False):
+def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False, **kwargs):
     """
     Uses @dnomadb algorithm, roughly:
         - cluster image using SLIC (k-means)
