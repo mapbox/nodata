@@ -1,12 +1,13 @@
-import os, shutil
+import os
+import shutil
 
 from click.testing import CliRunner
-from nodata.scripts.cli import cli
-
-import raster_tester
+import rasterio as rio
 
 import make_testing_data
-import rasterio as rio
+import raster_tester
+from nodata.scripts.cli import cli
+
 
 class TestingSetup:
     def __init__(self, testdir):
@@ -48,7 +49,8 @@ def test_blob_filling_realdata():
 
     runner = CliRunner()
 
-    result = runner.invoke(cli, ['blob', blobfile, filled_file, '-m', 4, '-n', '-c', 'LZW'])
+    result = runner.invoke(cli, [
+        'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW'])
     assert result.exit_code == 0
     
     raster_tester.compare(filled_file, expectedfile)
@@ -64,7 +66,9 @@ def test_blob_filling_rgb():
 
     runner = CliRunner()
 
-    result = runner.invoke(cli, ['blob', infile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG', '--alphafy'])
+    result = runner.invoke(cli, [
+        'blob', infile, blobbed_file, '-m', 4, '-n', '--co', 'compress=JPEG',
+        '--alphafy'])
     assert result.exit_code == 0
 
     
@@ -90,7 +94,8 @@ def test_blob_fail_no_nodata():
 
     runner = CliRunner()
 
-    result = runner.invoke(cli, ['blob', badfile, blobbed_file, '-m', 4, '-n', '-c', 'JPEG', '--alphafy'])
+    result = runner.invoke(cli, [
+        'blob', badfile, blobbed_file, '-m', 4, '-n', '--co', 'compress=JPEG', '--alphafy'])
     assert result.exit_code == -1
 
     tester.cleanup()
