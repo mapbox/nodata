@@ -112,7 +112,9 @@ def test_all_valid_edges():
     assert all_valid_edges(arr, ndv, threshold=1)
 
 
-def test_slic_mask():
+def test_slic_mask_not_any():
+    """SLIC doesn't mistake far-from-nodata values as nodata in a noisy
+    background."""
     slic_mask = alphamask.slic_mask
     arr = np.random.randint(200, size=(3, 100, 100))
     ndv = (255, 255, 255)
@@ -121,7 +123,26 @@ def test_slic_mask():
     assert mask.shape == (arr.shape[1], arr.shape[2])
     assert np.all(mask == 255)
 
+
+def test_slic_mask_any():
+    """SLIC does identify nodata on the edge of a noisy background."""
+    slic_mask = alphamask.slic_mask
+    arr = np.random.randint(200, size=(3, 100, 100))
+    ndv = (255, 255, 255)
+
+    # set right hand edge to the nodata value
     arr[:, :, -1] = 255
+
+    # set the next column in from the right edge to values near the
+    # ndata value to simulate nodata mixed in -- the lossy nodata 
+    # case.
+    arr[:, :, -2] = np.random.randint(253, 255, size=(100,))
+
+    # ensure we have 255 values.
+    arr[:, :, 0:5] = 255
+
     mask = slic_mask(arr, ndv)
-    assert np.all(mask[0:-1, 0:-1] == 255)
-    assert np.all(mask[-1, -1] == 0)
+
+    # assert that we do detect lossy nodata in the second to rightmost
+    # column.
+    assert np.any(mask[:, -2] == 0)
