@@ -1,5 +1,5 @@
 import click
-import nodata
+from nodata import blob as blobber
 
 @click.group()
 def cli():
@@ -25,6 +25,6 @@ def cli():
     help='If a RGB raster is found, blob + add alpha band where nodata is')
 def blob(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy):
     """"""
-    nodata.blob.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy)
+    blobber.blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask, compress, mask_threshold, workers, alphafy)
 
 cli.add_command(blob)
