@@ -108,6 +108,9 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         if len(bidx) == 0 or len(bidx) > src.count:
             raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
 
+        if maskThreshold != None:
+            maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
+
     with riomucho.RioMucho([src_path], dst_path, blob_worker,
         windows=windows,
         global_args={

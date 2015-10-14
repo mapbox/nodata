@@ -68,7 +68,7 @@ def test_blob_filling_realdata_threshold():
     runner = CliRunner()
 
     result = runner.invoke(cli, [
-        'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '-d', 255])
+        'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '-d', 0])
     assert result.exit_code == 0
     
     raster_tester.compare(filled_file, expectedfile)
