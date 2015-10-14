@@ -56,6 +56,24 @@ def test_blob_filling_realdata():
     raster_tester.compare(filled_file, expectedfile)
     tester.cleanup()
 
+def test_blob_filling_realdata_threshold():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/thresholder.tif')
+    filled_file = os.path.join(tmpdir, 'thresh_filled.tif')
+
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/threshold.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, [
+        'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '-d', 255])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
 def test_blob_filling_rgb():
     tmpdir = '/tmp/blob_filling'
     tester = TestingSetup(tmpdir)
@@ -70,7 +88,6 @@ def test_blob_filling_rgb():
         'blob', infile, blobbed_file, '-m', 4, '-n', '--co', 'compress=JPEG',
         '--alphafy'])
     assert result.exit_code == 0
-
     
     raster_tester.compare(blobbed_file, expectedfile)
     tester.cleanup()
