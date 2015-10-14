@@ -50,7 +50,8 @@ def blob_worker(srcs, window, ij, globalArgs):
         alphamask = True
     
     if globalArgs['maskThreshold'] != None and alphamask:
-        img[-1] = (img[-1] > globalArgs['maskThreshold']).astype(img.dtype) * img[-1].max()
+        img[-1] = np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype) * np.iinfo(img.dtype).max
+        mask = img[-1]
 
     if mask[pad:-pad, pad:-pad].any():
 
@@ -106,6 +107,9 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
         if len(bidx) == 0 or len(bidx) > src.count:
             raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
+
+        if maskThreshold != None:
+            maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
 
     with riomucho.RioMucho([src_path], dst_path, blob_worker,
         windows=windows,
