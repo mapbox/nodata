@@ -30,8 +30,11 @@ def fill_nodata(img, mask, fillBands, maxSearchDistance):
 
     return img
 
+def hasNodata(mask, pad):
+    return np.any(mask[pad:-pad, pad:-pad] == 0)
+
 def handle_RGB(img, mask):
-    return np.concatenate([img, np.array([mask])])
+    return np.concatenate([img, mask.reshape(1, mask.shape[-2], mask.shape[-1])])
 
 def blob_worker(srcs, window, ij, globalArgs):
 
@@ -53,8 +56,7 @@ def blob_worker(srcs, window, ij, globalArgs):
         img[-1] = np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype) * np.iinfo(img.dtype).max
         mask = img[-1]
 
-    if mask[pad:-pad, pad:-pad].any():
-
+    if hasNodata(mask, pad):
         img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
 
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
@@ -70,6 +72,9 @@ def blob_worker(srcs, window, ij, globalArgs):
                 None,
                 globalArgs['max_search_distance'],
                 True)
+
+    else:
+        img = img[:, pad: -pad, pad: -pad]
 
     return img
 
