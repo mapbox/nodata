@@ -48,4 +48,25 @@ def test_rgb_handling_fail():
     with pytest.raises(ValueError):
         blob.test_rgb(3, None, True, 4)
 
+@pytest.fixture
+def hasNodata():
+    return np.zeros((8, 8), dtype=np.uint8)
 
+def test_has_nodata(hasNodata):
+    assert blob.hasNodata(hasNodata, 2) == True
+
+@pytest.fixture
+def hasOneNodata():
+    tmpnone = np.zeros((8, 8), dtype=np.uint8) + 255
+    rrow, rcol = np.random.randint(0, 7, 2)
+    tmpnone[rrow, rcol] = 0
+
+def test_has_nodata(hasOneNodata):
+    assert blob.hasNodata(hasOneNodata, 2) == True
+
+@pytest.fixture
+def hasNoNodata():
+    return np.zeros((8, 8), dtype=np.uint8) + 255
+
+def test_has_nodata(hasNoNodata):
+    assert blob.hasNodata(hasNoNodata, 2) == False
