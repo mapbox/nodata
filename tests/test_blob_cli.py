@@ -85,8 +85,7 @@ def test_blob_filling_rgb():
     runner = CliRunner()
 
     result = runner.invoke(cli, [
-        'blob', infile, blobbed_file, '-m', 4, '-n', '--co', 'compress=JPEG',
-        '--alphafy'])
+        'blob', infile, blobbed_file, '-m', 10, '--co', 'compress=JPEG', '--alphafy'])
     assert result.exit_code == 0
     
     raster_tester.compare(blobbed_file, expectedfile)

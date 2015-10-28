@@ -57,7 +57,6 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     if hasNodata(mask, pad):
         img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
-
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
             img = nibble_filled_mask(
                 img,
@@ -101,16 +100,19 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         # Update withcreation options like 'compress': 'lzw'.
         options.update(**creation_options)
 
+        if bidx and (len(bidx) == 0 or len(bidx) > src.count):
+            raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
+
         if bidx:
             try:
                 bidx = [int(b) for b in json.loads(bidx)]
             except Exception as e:
                 raise e
+        elif alphafy:
+            bidx = src.indexes
+            bidx.append(src.indexes[-1] + 1)
         else:
             bidx = src.indexes
-
-        if len(bidx) == 0 or len(bidx) > src.count:
-            raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
 
         if maskThreshold != None:
             maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
