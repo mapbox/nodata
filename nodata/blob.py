@@ -86,19 +86,15 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         ]
 
         options = src.meta.copy()
+        kwds = src.kwds.copy()
 
         outNodata, selectNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
-        options.update(
-            tiled=True,
-            blockxsize=src.block_shapes[0][0],
-            blockysize=src.block_shapes[0][1],
-            count=outCount,
-            nodata=outNodata
-            )
-
+        options.update(**kwds)
         # Update withcreation options like 'compress': 'lzw'.
         options.update(**creation_options)
+
+        options.update(count=outCount, nodata=outNodata)
 
         if bidx and (len(bidx) == 0 or len(bidx) > src.count):
             raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
