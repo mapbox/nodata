@@ -96,14 +96,14 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
         options.update(count=outCount, nodata=outNodata)
 
-        if bidx and (len(bidx) == 0 or len(bidx) > src.count):
-            raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
-
         if bidx:
             try:
                 bidx = [int(b) for b in json.loads(bidx)]
             except Exception as e:
                 raise e
+
+            if bidx and (len(bidx) == 0 or len(bidx) > src.count):
+                raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
         elif alphafy:
             bidx = src.indexes
             bidx.append(src.indexes[-1] + 1)
