@@ -1,5 +1,4 @@
-import os
-import shutil
+import os, shutil
 
 from click.testing import CliRunner
 import rasterio as rio
@@ -56,6 +55,22 @@ def test_blob_filling_realdata():
     raster_tester.compare(filled_file, expectedfile)
     tester.cleanup()
 
+def test_blob_filling_realdata_specific_bands():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
+    filled_file = os.path.join(tmpdir, 'filliwack-1-2-3.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/bands-1-2-3-filled-only.tif')
+
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        'blob', blobfile, filled_file, '-m', 10, '--co', 'compress=LZW', '--bidx', "[1, 2, 3]"])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
 def test_blob_filling_realdata_rgb():
 
     tmpdir = '/tmp/blob_filling'
@@ -64,7 +79,6 @@ def test_blob_filling_realdata_rgb():
     blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
     rgb_file = os.path.join(tmpdir, '3band.tif')
 
-    #make a file rgb
     with rio.open(blobfile) as src:
         options = src.meta.copy()
         options.update(nodata=0.0, count=3, tiled=True, blockxsize=256, blockysize=256)
