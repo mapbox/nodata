@@ -19,12 +19,11 @@ def test_rgb(count, nodata, alphafy, outCount):
         if not isinstance(nodata, (int, long, float)):
             raise ValueError('3 band imagery must have a defined nodata value')
         
-        return nodata, outCount
+        return None, nodata, outCount
     else:
-        return None, count
+        return nodata, nodata, count
 
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
-
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
@@ -44,7 +43,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if isinstance(globalArgs['outNodata'], (int, long, float)):
+    if isinstance(globalArgs['selectNodata'], (int, long, float)):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         img = handle_RGB(img, mask)
         alphamask = False
@@ -89,7 +88,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
         options = src.meta.copy()
 
-        outNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
+        outNodata, selectNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
         options.update(
             tiled=True,
@@ -123,7 +122,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
             'nibblemask': nibblemask,
             'bands': bidx,
             'maskThreshold': maskThreshold,
-            'outNodata': outNodata
+            'selectNodata': selectNodata
         }, 
         options=options,
         mode='manual_read') as rm:
