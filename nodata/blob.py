@@ -20,6 +20,8 @@ def test_rgb(count, nodata, alphafy, outCount):
             raise ValueError('3 band imagery must have a defined nodata value')
         
         return None, nodata, outCount
+    elif alphafy:
+        return None, None, count
     else:
         return nodata, nodata, count
 
@@ -104,7 +106,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
             if bidx and (len(bidx) == 0 or len(bidx) > src.count):
                 raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
-        elif alphafy:
+        elif alphafy and src.count == 3:
             bidx = src.indexes
             bidx.append(src.indexes[-1] + 1)
         else:
