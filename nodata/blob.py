@@ -19,12 +19,13 @@ def test_rgb(count, nodata, alphafy, outCount):
         if not isinstance(nodata, (int, long, float)):
             raise ValueError('3 band imagery must have a defined nodata value')
         
-        return nodata, outCount
+        return None, nodata, outCount
+    elif alphafy:
+        return None, None, count
     else:
-        return None, count
+        return nodata, nodata, count
 
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
-
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
@@ -44,7 +45,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if isinstance(globalArgs['outNodata'], (int, long, float)):
+    if isinstance(globalArgs['selectNodata'], (int, long, float)):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         img = handle_RGB(img, mask)
         alphamask = False
@@ -58,7 +59,6 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     if hasNodata(mask, pad):
         img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
-
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
             img = nibble_filled_mask(
                 img,
@@ -88,30 +88,29 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         ]
 
         options = src.meta.copy()
+        kwds = src.kwds.copy()
 
-        outNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
+        outNodata, selectNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
-        options.update(
-            tiled=True,
-            blockxsize=src.block_shapes[0][0],
-            blockysize=src.block_shapes[0][1],
-            count=outCount,
-            nodata=outNodata
-            )
-
+        options.update(**kwds)
         # Update withcreation options like 'compress': 'lzw'.
         options.update(**creation_options)
+
+        options.update(count=outCount, nodata=outNodata)
 
         if bidx:
             try:
                 bidx = [int(b) for b in json.loads(bidx)]
             except Exception as e:
                 raise e
+
+            if bidx and (len(bidx) == 0 or len(bidx) > src.count):
+                raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
+        elif alphafy and src.count == 3:
+            bidx = src.indexes
+            bidx.append(src.indexes[-1] + 1)
         else:
             bidx = src.indexes
-
-        if len(bidx) == 0 or len(bidx) > src.count:
-            raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
 
         if maskThreshold != None:
             maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
@@ -123,7 +122,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
             'nibblemask': nibblemask,
             'bands': bidx,
             'maskThreshold': maskThreshold,
-            'outNodata': outNodata
+            'selectNodata': selectNodata
         }, 
         options=options,
         mode='manual_read') as rm:

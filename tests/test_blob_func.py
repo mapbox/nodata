@@ -34,14 +34,22 @@ def test_handle_rgb():
     mask = np.zeros((100, 100))
     assert blob.handle_RGB(img, mask).shape == (4, 100, 100)
 
-def test_rgb_handling():
-    outNodata, outCount = blob.test_rgb(3, 0.0, True, 4)
-    assert outNodata == 0.0
+def test_rgb_handling_alphafy():
+    outNodata, selectNodata, outCount = blob.test_rgb(3, 0.0, True, 4)
+    assert outNodata == None
+    assert selectNodata == 0.0
     assert outCount == 4
 
+def test_rgb_handling_no_alphafy():
+    outNodata, selectNodata, outCount = blob.test_rgb(3, 0.0, False, 4)
+    assert outNodata == 0.0
+    assert selectNodata == 0.0
+    assert outCount == 3
+
 def test_rgba_handling():
-    outNodata, outCount = blob.test_rgb(4, None, True, 4)
+    outNodata, selectNodata, outCount = blob.test_rgb(4, None, True, 4)
     assert outNodata == None
+    assert selectNodata == None
     assert outCount == 4
 
 def test_rgb_handling_fail():
