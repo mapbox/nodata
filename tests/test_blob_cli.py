@@ -1,5 +1,4 @@
-import os
-import shutil
+import os, shutil
 
 from click.testing import CliRunner
 import rasterio as rio
@@ -56,6 +55,76 @@ def test_blob_filling_realdata():
     raster_tester.compare(filled_file, expectedfile)
     tester.cleanup()
 
+
+def test_blob_filling_realdata_specific_bands():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
+    filled_file = os.path.join(tmpdir, 'filliwack-1-2-3.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/bands-1-2-3-filled-only.tif')
+
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        'blob', blobfile, filled_file, '-m', 10, '--co', 'compress=LZW', '--bidx', "[1, 2, 3]"])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
+def test_blob_filling_realdata_rgb():
+
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
+    rgb_file = os.path.join(tmpdir, '3band.tif')
+
+    with rio.open(blobfile) as src:
+        options = src.meta.copy()
+        options.update(nodata=0.0, count=3, tiled=True, blockxsize=256, blockysize=256)
+        with rio.open(rgb_file, 'w', **options) as dst:
+            for b in range(1, 4):
+                dst.write(src.read(b), b)
+
+    filled_file = os.path.join(tmpdir, 'filliwack.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/seams_4band.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, [
+        'blob', rgb_file, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '--alphafy'])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
+def test_blob_filling_realdata_rgba_with_nodata():
+
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band.tif')
+    rgb_file = os.path.join(tmpdir, '3band.tif')
+
+    with rio.open(blobfile) as src:
+        options = src.meta.copy()
+        options.update(nodata=0.0, tiled=True, blockxsize=256, blockysize=256)
+        with rio.open(rgb_file, 'w', **options) as dst:
+            dst.write(src.read())
+
+    filled_file = os.path.join(tmpdir, 'filliwack.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/seams_4band.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, [
+        'blob', rgb_file, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '--alphafy'])
+    assert result.exit_code == 0
+
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
 def test_blob_filling_realdata_threshold():
     tmpdir = '/tmp/blob_filling'
     tester = TestingSetup(tmpdir)
@@ -70,7 +139,7 @@ def test_blob_filling_realdata_threshold():
     result = runner.invoke(cli, [
         'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW', '-d', 0])
     assert result.exit_code == 0
-    
+
     raster_tester.compare(filled_file, expectedfile)
     tester.cleanup()
 
@@ -85,8 +154,7 @@ def test_blob_filling_rgb():
     runner = CliRunner()
 
     result = runner.invoke(cli, [
-        'blob', infile, blobbed_file, '-m', 4, '-n', '--co', 'compress=JPEG',
-        '--alphafy'])
+        'blob', infile, blobbed_file, '-m', 10, '--co', 'compress=JPEG', '--alphafy'])
     assert result.exit_code == 0
     
     raster_tester.compare(blobbed_file, expectedfile)
