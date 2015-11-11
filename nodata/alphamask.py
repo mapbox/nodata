@@ -56,7 +56,19 @@ def simple_mask(data, ndv, **kwargs):
     return alpha
 
 
-def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False, **kwargs):
+def threshold_mask(data, ndv, threshold=3, **kwargs):
+    '''Threshold nodata masking
+    The absolute difference of RGB to ndv is masked to the specified threshold
+    e.g. threshold of 6 and ndv of (255, 255, 255)
+         would mark (253, 253, 253) as nodata (absolute diff <= 6)
+    '''
+    assert data.shape[0] == len(ndv)
+    near_nodata = _diff_nodata(data, ndv)
+    alpha = (near_nodata >= threshold).astype('uint8') * 255
+    return alpha
+
+
+def slic_mask(arr, nodata, n_clusters=5, threshold=5, compactness=10.0, debug=False, **kwargs):
     """
     Uses @dnomadb algorithm, roughly:
         - cluster image using SLIC (k-means)
@@ -66,7 +78,7 @@ def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False, **kwargs):
     """
     assert arr.shape[0] == len(nodata)
     near_nodata = _diff_nodata(arr, nodata)
-    clusters = slic(near_nodata, n_clusters)
+    clusters = slic(near_nodata, n_clusters, compactness=compactness)
     labeled = measure.label(clusters) + 1
     measures = measure.regionprops(labeled, intensity_image=near_nodata, cache=True)
     mean_intensity = _hacky_make_image(labeled, np.unique(labeled), measures, 'mean_intensity')
