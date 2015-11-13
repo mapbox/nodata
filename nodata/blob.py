@@ -88,7 +88,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         ]
 
         options = src.meta.copy()
-        kwds = src.kwds.copy()
+        kwds = src.profile.copy()
 
         outNodata, selectNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
