@@ -26,6 +26,10 @@ def test_rgb(count, nodata, alphafy, outCount):
         return nodata, nodata, count
 
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
+    if np.count_nonzero(mask) == 0:
+        # filling will do nothing, skip
+        return img
+
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
