@@ -25,9 +25,15 @@ def test_rgb(count, nodata, alphafy, outCount):
     else:
         return nodata, nodata, count
 
+def getValid(mask, buff):
+    idxs = np.where(np.invert(mask))
+    rows, cols = mask.shape
+    return max(idxs[0].min() - buff, 0), min(idxs[0].max() + buff + 1, rows), max(idxs[1].min() - buff, 0), min(idxs[1].max() + buff + 1, cols)
+
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
+    frR, toR, frC, toC = getValid(mask, maxSearchDistance)
     for b in fillBands:
-        img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
+        img[b - 1][frR: toR, frC: toC] = fillnodata(img[b - 1][frR: toR, frC: toC], mask, maxSearchDistance)
 
     return img
 
@@ -131,7 +137,6 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
 
 def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
-    filled = np.array(filled)
     if is_mask:
         filled = minimum_filter(filled, size=(max_search_distance * 2 + 1))
     else:
