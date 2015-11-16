@@ -32,12 +32,15 @@ def fill_nodata(img, mask, fillBands, maxSearchDistance):
     return img
 
 def runNodataFiller(mask, pad):
-    nonZero = np.count_nonzero(mask[pad:-pad, pad:-pad])
+    inside_nonzero = np.count_nonzero(mask[pad:-pad, pad:-pad])
 
-    if nonZero == 0 or nonZero == mask[pad:-pad, pad:-pad].size:
+    if inside_nonzero == mask[pad:-pad, pad:-pad].size:  # inside is all data
         return False
-    else:
-        return True
+
+    if np.count_nonzero(mask) == 0:  # entire thing is no data
+        return False
+
+    return True
 
 
 def handle_RGB(img, mask):
