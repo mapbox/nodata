@@ -26,17 +26,19 @@ def test_rgb(count, nodata, alphafy, outCount):
         return nodata, nodata, count
 
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
-    if np.count_nonzero(mask) == 0:
-        # filling will do nothing, skip
-        return img
-
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
     return img
 
-def hasNodata(mask, pad):
-    return np.any(mask[pad:-pad, pad:-pad] == 0)
+def runNodataFiller(mask, pad):
+    nonZero = np.count_nonzero(mask[pad:-pad, pad:-pad])
+
+    if nonZero == 0 or nonZero == mask[pad:-pad, pad:-pad].size:
+        return False
+    else:
+        return True
+
 
 def handle_RGB(img, mask):
     return np.concatenate([img, mask.reshape(1, mask.shape[-2], mask.shape[-1])])
@@ -61,7 +63,7 @@ def blob_worker(srcs, window, ij, globalArgs):
         img[-1] = np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype) * np.iinfo(img.dtype).max
         mask = img[-1]
 
-    if hasNodata(mask, pad):
+    if runNodataFiller(mask, pad):
         img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
         if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
             img = nibble_filled_mask(
