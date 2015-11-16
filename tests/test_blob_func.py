@@ -28,7 +28,7 @@ def test_fill_nodata(areaToFill):
     filled = blob.fill_nodata(areaToFill, mask, (1, 2, 3, 4), 100)
     filledSum = np.sum(np.all(np.dstack(filled) == (0, 0, 0, 0), axis=2))
     assert notFilledSum > filledSum
-    
+
 def test_handle_rgb():
     img = np.zeros((3, 100,100))
     mask = np.zeros((100, 100))
@@ -57,24 +57,24 @@ def test_rgb_handling_fail():
         blob.test_rgb(3, None, True, 4)
 
 @pytest.fixture
-def hasNodata():
+def has_all_nodata():
     return np.zeros((8, 8), dtype=np.uint8)
 
-def test_has_nodata(hasNodata):
-    assert blob.hasNodata(hasNodata, 2) == True
-
 @pytest.fixture
-def hasOneNodata():
+def has_one_nodata():
     tmpnone = np.zeros((8, 8), dtype=np.uint8) + 255
-    rrow, rcol = np.random.randint(0, 7, 2)
-    tmpnone[rrow, rcol] = 0
-
-def test_has_nodata(hasOneNodata):
-    assert blob.hasNodata(hasOneNodata, 2) == True
+    tmpnone[4, 4] = 0
+    return tmpnone
 
 @pytest.fixture
-def hasNoNodata():
+def has_no_nodata():
     return np.zeros((8, 8), dtype=np.uint8) + 255
 
-def test_has_nodata(hasNoNodata):
-    assert blob.hasNodata(hasNoNodata, 2) == False
+def test_run_nodatafiller_nono(has_no_nodata):
+    assert blob.runNodataFiller(has_no_nodata, 2) is False
+
+def test_run_nodatafiller_one(has_one_nodata):
+    assert blob.runNodataFiller(has_one_nodata, 2) is True
+
+def test_run_nodatafiller_all(has_all_nodata):
+    assert blob.runNodataFiller(has_all_nodata, 2) is False
