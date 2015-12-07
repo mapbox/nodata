@@ -1,4 +1,8 @@
-# nodata
+[![Circle CI](https://circleci.com/gh/mapbox/nodata.svg?style=svg&circle-token=c851126e89770fc401d0606d8b7aca556caeabc0)](https://circleci.com/gh/mapbox/nodata)
+
+nodata
+======
+
 ![miles-davis7](https://cloud.githubusercontent.com/assets/5084513/9670961/4f04da04-5244-11e5-93e5-86b69694f82f.jpg)
 
 

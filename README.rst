@@ -1,3 +1,5 @@
+|Circle CI|
+
 nodata
 ======
 
@@ -42,3 +44,6 @@ Nodata blobbing
                                       band where nodata is
     -j, --jobs                        Number of workers for multiprocessing [default=4]             
     --help                            Show this message and exit.
+
+.. |Circle CI| image:: https://circleci.com/gh/mapbox/nodata.svg?style=svg&circle-token=c851126e89770fc401d0606d8b7aca556caeabc0
+   :target: https://circleci.com/gh/mapbox/nodata
