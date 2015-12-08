@@ -57,24 +57,67 @@ def test_rgb_handling_fail():
         blob.test_rgb(3, None, True, 4)
 
 @pytest.fixture
-def has_all_nodata():
+def has_nodata():
     return np.zeros((8, 8), dtype=np.uint8)
 
 @pytest.fixture
-def has_one_nodata():
+def has_somedata():
     tmpnone = np.zeros((8, 8), dtype=np.uint8) + 255
     tmpnone[4, 4] = 0
     return tmpnone
 
 @pytest.fixture
-def has_no_nodata():
+def has_alldata():
     return np.zeros((8, 8), dtype=np.uint8) + 255
 
-def test_run_nodatafiller_nono(has_no_nodata):
-    assert blob.runNodataFiller(has_no_nodata, 2) is False
+def _add_padding(arr, pad, pad_type):
+    w, h = arr.shape
 
-def test_run_nodatafiller_one(has_one_nodata):
-    assert blob.runNodataFiller(has_one_nodata, 2) is True
+    # all_nodata
+    outarr = np.zeros(((w + pad * 2), (h + pad * 2)), dtype=np.uint8)
 
-def test_run_nodatafiller_all(has_all_nodata):
-    assert blob.runNodataFiller(has_all_nodata, 2) is False
+    if pad_type == 'alldata':
+        outarr = outarr + 255
+    elif pad_type == 'somedata':
+        outarr[0, 0] = 255
+
+    outarr[pad:-pad, pad:-pad] = arr
+
+    return outarr
+
+
+def test_dofill_nodata_nodata(has_nodata):
+    arr = _add_padding(has_nodata, 2, pad_type="nodata")
+    assert blob.runNodataFiller(arr, 2) is False
+
+def test_dofill_nodata_somedata(has_nodata):
+    arr = _add_padding(has_nodata, 2, pad_type="somedata")
+    assert blob.runNodataFiller(arr, 2) is True
+
+def test_dofill_nodata_alldata(has_nodata):
+    arr = _add_padding(has_nodata, 2, pad_type="alldata")
+    assert blob.runNodataFiller(arr, 2) is True
+
+def test_dofill_somedata_nodata(has_somedata):
+    arr = _add_padding(has_somedata, 2, pad_type="nodata")
+    assert blob.runNodataFiller(arr, 2) is True
+
+def test_dofill_somedata_somedata(has_somedata):
+    arr = _add_padding(has_somedata, 2, pad_type="somedata")
+    assert blob.runNodataFiller(arr, 2) is True
+
+def test_dofill_somedata_alldata(has_somedata):
+    arr = _add_padding(has_somedata, 2, pad_type="alldata")
+    assert blob.runNodataFiller(arr, 2) is True
+
+def test_dofill_alldata_nodata(has_alldata):
+    arr = _add_padding(has_alldata, 2, pad_type="nodata")
+    assert blob.runNodataFiller(arr, 2) is False
+
+def test_dofill_alldata_somedata(has_alldata):
+    arr = _add_padding(has_alldata, 2, pad_type="somedata")
+    assert blob.runNodataFiller(arr, 2) is False
+
+def test_dofill_alldata_alldata(has_alldata):
+    arr = _add_padding(has_alldata, 2, pad_type="alldata")
+    assert blob.runNodataFiller(arr, 2) is False
