@@ -1,6 +1,6 @@
 from itertools import izip, repeat
 from multiprocessing import cpu_count, Pool
-import sys
+from nodata.alphamask import all_valid_edges
 import zlib
 
 import numpy
@@ -31,13 +31,13 @@ def finalize_worker():
 
 # The following function is executed by worker processes.
 
-def compute_window_mask(args):
+def compute_window_rgba(args):
     """Execute the given function with keyword arguments to compute a
     valid data mask.
 
     Returns the window and mask as deflated bytes.
     """
-    window, nodata, extra_args = args
+    window, ndv, extra_args = args
     global mask_function, src_dataset
 
     padding = int(extra_args.get('padding', 0))
@@ -51,18 +51,26 @@ def compute_window_mask(args):
         read_window = window
 
     source = src_dataset.read(window=read_window, boundless=True)
-    result = mask_function(source, nodata, **extra_args)
+
+    # Normalize nodata, if single number -> make a tuple
+    if isinstance(ndv, (int, float)):
+        ndv = tuple([ndv] * source.shape[0])
+
+    if all_valid_edges(source, ndv, padding=padding):
+        # Skip mask_function and fill mask with valid data (255 or dtype max)
+        h, w = rasterio.window_shape(read_window)
+        nd = numpy.iinfo(source.dtype).max
+        mask = (numpy.ones((h, w)) * nd).astype('uint8')
+    else:
+        # Run the masking function
+        mask = mask_function(source, ndv, **extra_args)
 
     if padding:
-        result = result[:, padding:-padding, padding:-padding]
+        mask = mask[:, padding:-padding, padding:-padding]
+    mask3d = mask[numpy.newaxis, :]
 
-    return window, zlib.compress(result.tobytes())
-
-
-def all_valid(arr, nodata, **kwargs):
-    """Return an all-valid mask of the same shape and type as the
-    given array"""
-    return 255 * numpy.ones_like(arr[0])
+    rgba = numpy.concatenate((source, mask3d), axis=0)
+    return window, zlib.compress(rgba)
 
 
 class NodataPoolMan:
@@ -72,33 +80,50 @@ class NodataPoolMan:
     windows of a dataset.
     """
 
-    def __init__(self, input_path, func, nodata, num_workers=None,
-            max_tasks=100):
+    def __init__(self, input_path, func, ndv, num_workers=None,
+                 max_tasks=100):
         """Create a pool of workers to process window masks"""
         self.input_path = input_path
         self.func = func
-        self.nodata = nodata
+        self.ndv = ndv
 
         # Peek in the source file for metadata. We could even get the
-        # nodata value from here in some cases.
+        # ndv value from here in some cases.
         with rasterio.open(input_path) as src:
             self.dtype = src.dtypes[0]
+            self.count = src.count
 
-        self.pool = Pool(
-            num_workers or cpu_count()-1, init_worker, (input_path, func),
-            max_tasks)
+        jobs = num_workers or cpu_count()-1
+        if jobs > 1:
+            self.pool = Pool(jobs, init_worker,
+                             (input_path, func),
+                             max_tasks)
+        else:
+            self.pool = None
+
+        init_worker(input_path, func)
+
+    def _proc_data(self, out_window, data):
+        h, w = rasterio.window_shape(out_window)
+        b = self.count + 1
+        arr = numpy.fromstring(zlib.decompress(data), self.dtype)
+        return out_window, arr.reshape((b, h, w))
 
     def mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
 
-        The keyword arguments will be passed as keyword arguments to the 
+        The keyword arguments will be passed as keyword arguments to the
         manager's mask algorithm function.
 
         Yields window, ndarray pairs.
         """
-        iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
-        for out_window, data in self.pool.imap_unordered(
-                compute_window_mask, iterargs):
-            yield out_window, numpy.fromstring(
-                                zlib.decompress(data), self.dtype).reshape(
-                                    rasterio.window_shape(out_window))
+        iterargs = izip(windows, repeat(self.ndv), repeat(kwargs))
+
+        if self.pool:
+            for out_window, data in self.pool.imap_unordered(
+                    compute_window_rgba, iterargs):
+                yield self._proc_data(out_window, data)
+        else:
+            for args in iterargs:
+                out_window, data = compute_window_rgba(args)
+                yield self._proc_data(out_window, data)

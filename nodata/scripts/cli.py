@@ -40,3 +40,41 @@ def blob(src_path, dst_path, bidx, max_search_distance, nibblemask,
 
 
 cli.add_command(blob)
+
+
+@click.command(short_help="Take RGB image and create RGBA with masked Alpha band")
+@click.argument('src_path', type=click.Path(exists=True))
+@click.argument('dst_path', type=click.Path(exists=False))
+@click.option('--ndv', type=int, default=None)
+@click.option('--mode', type=click.Choice(['exact', 'slic']), default='exact')
+@click.option('--padding', type=int, default=0)
+@click.option('--jobs', '-j', type=int, default=None)
+def alpha(src_path, dst_path, ndv, mode, padding, jobs):
+    """"""
+    from nodata.alphamask import simple_mask, slic_mask
+    from .alpha import NodataPoolMan
+    import rasterio
+
+    if mode == 'exact':
+        func = simple_mask
+    elif mode == 'slic':
+        func = slic_mask
+
+    with rasterio.open(src_path, 'r') as src:
+        profile = src.profile
+        source_ndv = src.nodata
+        windows = [window for ij, window in src.block_windows()]
+
+    ndv = ndv or source_ndv
+    if not ndv:
+        raise click.UsageError("Dataset nodata is not defined, must supply --ndv")
+
+    ndpm = NodataPoolMan(src_path, func, ndv, num_workers=jobs)
+
+    profile['count'] += 1
+    profile['transform'] = src.affine
+    with rasterio.open(dst_path, 'w', **profile) as dst:
+        for win, data in ndpm.mask(windows, padding=padding):
+            dst.write(data, window=win)
+
+cli.add_command(alpha)
