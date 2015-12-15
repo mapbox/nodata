@@ -14,6 +14,14 @@ def pad_window(wnd, pad):
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+def make_windows(width, height, blocksize):
+    for x in range(0, width, blocksize):
+       for y in range(0, height, blocksize):
+           yield (x, y), (
+               (y, min((y + blocksize), height)),
+               (x, min((x + blocksize), width))
+               )
+
 def test_rgb(count, nodata, alphafy, outCount):
     if count == 3 and alphafy:
         if not isinstance(nodata, (int, long, float)):
@@ -86,12 +94,17 @@ def blob_worker(srcs, window, ij, globalArgs):
 
 
 def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
-        creation_options, maskThreshold, workers, alphafy):
+        creation_options, maskThreshold, workers, alphafy, default_window=256):
 
     with rio.open(src_path) as src:
-        windows = [
-            [window, ij] for ij, window in src.block_windows()
-        ]
+        if not src.is_tiled:
+            windows = [
+                [window, ij] for ij, window in make_windows(src.width, src.height, default_window)
+            ]
+        else:
+            windows = [
+                [window, ij] for ij, window in src.block_windows()
+            ]
 
         options = src.meta.copy()
         kwds = src.profile.copy()

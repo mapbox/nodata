@@ -99,6 +99,23 @@ def test_blob_filling_realdata_rgb():
     raster_tester.compare(filled_file, expectedfile)
     tester.cleanup()
 
+def test_blob_filling_realdata_untiled():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    blobfile = os.path.join(os.getcwd(), 'tests/fixtures/blob/seams_4band_untiled.tif')
+    filled_file = os.path.join(tmpdir, 'filliwack.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/seams_4band.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, [
+        'blob', blobfile, filled_file, '-m', 4, '-n', '--co', 'compress=LZW'])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(filled_file, expectedfile)
+    tester.cleanup()
+
 def test_blob_filling_realdata_rgba_with_nodata():
 
     tmpdir = '/tmp/blob_filling'
