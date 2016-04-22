@@ -17,3 +17,6 @@ dependencies:
 test:
     override:
         - py.test --cov nodata --cov-report term-missing --ignore=venv
+    post:
+        - codecov -t e126ab82-d70a-4599-9a8e-5f175543bedb
+        - codecov
