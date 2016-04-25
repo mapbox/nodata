@@ -1,5 +1,4 @@
 click
-cython
 rasterio
 raster-tester
 scikit-image
