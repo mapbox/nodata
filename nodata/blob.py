@@ -6,6 +6,8 @@ import rasterio as rio
 from rasterio.fill import fillnodata
 import riomucho
 
+from scipy import ndimage
+
 from scipy.ndimage.filters import maximum_filter, minimum_filter
 
 def pad_window(wnd, pad):
@@ -25,11 +27,31 @@ def test_rgb(count, nodata, alphafy, outCount):
     else:
         return nodata, nodata, count
 
+# @profile
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
-    for b in fillBands:
-        img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
-    return img
+    arr = img.copy()
+    dist, ind = ndimage.distance_transform_edt(mask == 0, return_distances=True, return_indices=True)
+    ind[:, dist >= maxSearchDistance] = 0
+    for b in fillBands:
+        arr[b - 1] = arr[b - 1][tuple(ind)]
+
+    return arr
+
+def fill_nodata2(img, mask, fillBands, maxSearchDistance):
+
+    arr = img.copy()
+    dist, ind = ndimage.distance_transform_edt(mask == 0, return_distances=True, return_indices=True)
+    range_mask = np.logical_and(dist > 0, dist <= maxSearchDistance)
+
+    for b in fillBands:
+        closest_value = arr[b - 1][tuple(ind)]
+        np.place(arr[b - 1],  # replace values of band
+                 range_mask,  # only where 0 < distance <= max
+                              # with the closest values within distance range
+                 closest_value[range_mask].flatten())
+
+    return arr
 
 def runNodataFiller(mask, pad):
     nonZero = np.count_nonzero(mask[pad:-pad, pad:-pad])
