@@ -1,6 +1,7 @@
 import click
 import json
 import numpy as np
+from numbers import Number
 
 import rasterio as rio
 from rasterio.fill import fillnodata
@@ -16,7 +17,7 @@ def pad_window(wnd, pad):
 
 def test_rgb(count, nodata, alphafy, outCount):
     if count == 3 and alphafy:
-        if not isinstance(nodata, (int, long, float)):
+        if not isinstance(nodata, Number):
             raise ValueError('3 band imagery must have a defined nodata value')
         
         return None, nodata, outCount
@@ -51,7 +52,7 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     img = srcs[0].read(boundless=True, window=padWindow)
 
-    if isinstance(globalArgs['selectNodata'], (int, long, float)):
+    if isinstance(globalArgs['selectNodata'], Number):
         mask = srcs[0].read_masks(boundless=True, window=padWindow)[0]
         img = handle_RGB(img, mask)
         alphamask = False
