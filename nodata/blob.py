@@ -113,10 +113,10 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
             if bidx and (len(bidx) == 0 or len(bidx) > src.count):
                 raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
         elif alphafy and src.count == 3:
-            bidx = src.indexes
+            bidx = list(src.indexes)
             bidx.append(src.indexes[-1] + 1)
         else:
-            bidx = src.indexes
+            bidx = list(src.indexes)
 
         if maskThreshold != None:
             maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
@@ -149,20 +149,19 @@ def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
     return filled
 
 def make_nibbled(src_path, dst_path, nibble):
-    with rio.drivers():
-        with rio.open(src_path, 'r') as src:
-            img = src.read(masked=False)
-            kwargs = src.meta
-            if 'nodata' in src.meta:
-                nodataval = src.meta['nodata']
-            else:
-                nodataval = 0.0
+    with rio.open(src_path, 'r') as src:
+        img = src.read(masked=False)
+        kwargs = src.meta
+        if 'nodata' in src.meta:
+            nodataval = src.meta['nodata']
+        else:
+            nodataval = 0.0
 
-        # to silence the warning  
-        kwargs.update(compress='lzw', transform=kwargs['affine'])
+    # to silence the warning  
+    kwargs.update(compress='lzw', transform=kwargs['affine'])
 
-        nibbled = nibble_filled_mask(img, nodataval, nibble)
+    nibbled = nibble_filled_mask(img, nodataval, nibble)
 
-        with rio.open(dst_path, 'w', **kwargs) as dst:
-            for i, arr in enumerate(nibbled, 1):
-                dst.write(arr, i)
+    with rio.open(dst_path, 'w', **kwargs) as dst:
+        for i, arr in enumerate(nibbled, 1):
+            dst.write(arr, i)

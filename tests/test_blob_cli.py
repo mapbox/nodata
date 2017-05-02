@@ -160,6 +160,23 @@ def test_blob_filling_rgb():
     raster_tester.compare(blobbed_file, expectedfile)
     tester.cleanup()
 
+def test_blob_filling_rgb():
+    tmpdir = '/tmp/blob_filling'
+    tester = TestingSetup(tmpdir)
+
+    infile = os.path.join(os.getcwd(), 'tests/fixtures/blob/rgb_toblob.tif')
+    blobbed_file = os.path.join(tmpdir, 'blobbedrgb.tif')
+    expectedfile = os.path.join(os.getcwd(), 'tests/expected/blob/rgb_toblob.tif')
+
+    runner = CliRunner()
+
+    result = runner.invoke(cli, [
+        'blob', infile, blobbed_file, '-m', 10, '--co', 'compress=JPEG', '--alphafy'])
+    assert result.exit_code == 0
+    
+    raster_tester.compare(blobbed_file, expectedfile)
+    tester.cleanup()
+
 def test_blob_fail_no_nodata():
     """Should fail when there RGB + no nodata"""
     tmpdir = '/tmp/blob_filling'

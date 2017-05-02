@@ -15,10 +15,9 @@ def makehappytiff(dst_path, seams_path):
         testdata[i][0:100,:] = 0
         testdata[i][:,900:] = 0
 
-    with rio.drivers():
-        with rio.open(dst_path, 'w', **kwargs) as dst:
-            for i, arr in enumerate(testdata, 1):
-                dst.write(arr, i)
+    with rio.open(dst_path, 'w', **kwargs) as dst:
+        for i, arr in enumerate(testdata, 1):
+            dst.write(arr, i)
 
     if seams_path:
         frto = np.sort(np.random.rand(2) * imsize).astype(int)
@@ -33,26 +32,24 @@ def makehappytiff(dst_path, seams_path):
             testdata[i][inds, rInds] = 0
             testdata[i][inds, rInds-1] = 0
             testdata[i][inds, rInds+1] = 0
-        with rio.drivers():
-            with rio.open(seams_path, 'w', **kwargs) as dst:
-                for i, arr in enumerate(testdata, 1):
-                    dst.write(arr, i)
+        with rio.open(seams_path, 'w', **kwargs) as dst:
+            for i, arr in enumerate(testdata, 1):
+                dst.write(arr, i)
 
 
 def getnulldiff(in1, in2, threshold):
-    with rio.drivers():
-        with rio.open(in1, 'r') as src:
-            msk1 = src.read_masks()
+    with rio.open(in1, 'r') as src:
+        msk1 = src.read_masks()
 
-        with rio.open(in2, 'r') as src:
-            msk2 = src.read_masks()
-
+    with rio.open(in2, 'r') as src:
+        msk2 = src.read_masks()
 
     allmsk1 = ((msk1[0] == 0) & (msk1[1] == 0) & (msk1[1] == 0)).astype(int)
     allmsk2 = ((msk2[0] == 0) & (msk2[1] == 0) & (msk2[1] == 0)).astype(int)
     diff = np.count_nonzero(allmsk1) - np.count_nonzero(allmsk2)
     
     assert diff >= threshold, "input 1 has more than %d nodata pixels than input 2" % (threshold)
+
 
 if __name__ == '__main__':
     makehappytiff()

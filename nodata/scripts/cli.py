@@ -1,3 +1,4 @@
+from __future__ import print_function
 import click
 
 from rasterio.rio.options import creation_options
@@ -34,6 +35,9 @@ def cli():
 def blob(src_path, dst_path, bidx, max_search_distance, nibblemask,
         creation_options, mask_threshold, jobs, alphafy):
     """"""
+    args = (src_path, dst_path, bidx, max_search_distance, nibblemask,
+            creation_options, mask_threshold, jobs, alphafy)
+    import sys; print(args, file=sys.stderr)
     blob_nodata(
         src_path, dst_path, bidx, max_search_distance, nibblemask,
         creation_options, mask_threshold, jobs, alphafy)
