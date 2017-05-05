@@ -1,19 +1,12 @@
-machine:
-    python:
-        version: 2.7.10
-        version: 3.4.4
-
 dependencies:
     pre:
+        - pip install tox tox-pyenv
         - sudo apt-get -y --no-install-recommends --force-yes install libgdal1h gdal-bin libgdal-dev
     override:
+        - pyenv local 2.7.10 3.6.1
         - pip install -U pip
         - pip install numpy
         - pip install scipy
         - pip install "rasterio>=1.0a8"
         - pip install -r requirements.txt
         - pip install -e ".[test]"
-
-test:
-    override:
-        - py.test --cov nodata --cov-report term-missing --ignore=venv
