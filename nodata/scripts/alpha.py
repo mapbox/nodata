@@ -1,7 +1,11 @@
-from itertools import izip, repeat
+from itertools import repeat
 from multiprocessing import cpu_count, Pool
 import sys
 import zlib
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip  # py3 use builtin zip
 
 import numpy
 import rasterio
