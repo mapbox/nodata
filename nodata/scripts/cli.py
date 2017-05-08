@@ -37,7 +37,6 @@ def blob(src_path, dst_path, bidx, max_search_distance, nibblemask,
     """"""
     args = (src_path, dst_path, bidx, max_search_distance, nibblemask,
             creation_options, mask_threshold, jobs, alphafy)
-    import sys; print(args, file=sys.stderr)
     blob_nodata(
         src_path, dst_path, bidx, max_search_distance, nibblemask,
         creation_options, mask_threshold, jobs, alphafy)
