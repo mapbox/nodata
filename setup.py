@@ -8,7 +8,7 @@ with codecs_open('README.rst', encoding='utf-8') as f:
 
 
 setup(name='nodata',
-      version='0.4.2',
+      version='0.5.0',
       description=u"Utilities for handling nodata",
       long_description=long_description,
       classifiers=[],
@@ -22,7 +22,7 @@ setup(name='nodata',
       zip_safe=False,
       install_requires=[
           'click',
-          'rasterio',
+          'rasterio>=1.0a10',
           'rio-mucho',
           'scipy',
           'raster-tester'
