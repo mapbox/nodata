@@ -5,6 +5,7 @@ from numbers import Number
 
 import rasterio as rio
 from rasterio.fill import fillnodata
+from rasterio.windows import Window
 import riomucho
 
 from scipy.ndimage.filters import maximum_filter, minimum_filter
