@@ -48,8 +48,8 @@ def blob_worker(srcs, window, ij, globalArgs):
 
     pad = globalArgs['max_search_distance'] + 1
 
-    padWindow = pad_window(window, pad)
-
+    padWindow = Window.from_slices(*pad_window(window, pad))
+    
     img = srcs[0].read(boundless=True, window=padWindow)
 
     if isinstance(globalArgs['selectNodata'], Number):
