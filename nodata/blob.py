@@ -9,17 +9,25 @@ import riomucho
 
 from scipy.ndimage.filters import maximum_filter, minimum_filter
 
+
 def pad_window(wnd, pad):
+    try:
+        wnd = wnd.toranges()
+    except AttributeError:
+        # rasterio < 1.0, already a tuple
+        pass
+
     return (
         (wnd[0][0] - pad, wnd[0][1] + pad),
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+
 def test_rgb(count, nodata, alphafy, outCount):
     if count == 3 and alphafy:
         if not isinstance(nodata, Number):
             raise ValueError('3 band imagery must have a defined nodata value')
-        
+
         return None, nodata, outCount
     elif alphafy:
         return None, None, count
@@ -44,8 +52,8 @@ def runNodataFiller(mask, pad):
 def handle_RGB(img, mask):
     return np.concatenate([img, mask.reshape(1, mask.shape[-2], mask.shape[-1])])
 
-def blob_worker(srcs, window, ij, globalArgs):
 
+def blob_worker(srcs, window, ij, globalArgs):
     pad = globalArgs['max_search_distance'] + 1
 
     padWindow = pad_window(window, pad)
@@ -59,7 +67,7 @@ def blob_worker(srcs, window, ij, globalArgs):
     else:
         mask = img[-1]
         alphamask = True
-    
+
     if globalArgs['maskThreshold'] != None and alphamask:
         img[-1] = np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype) * np.iinfo(img.dtype).max
         mask = img[-1]
@@ -130,7 +138,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
             'bands': bidx,
             'maskThreshold': maskThreshold,
             'selectNodata': selectNodata
-        }, 
+        },
         options=options,
         mode='manual_read') as rm:
 
@@ -158,7 +166,7 @@ def make_nibbled(src_path, dst_path, nibble):
         else:
             nodataval = 0.0
 
-    # to silence the warning  
+    # to silence the warning
     kwargs.update(compress='lzw', transform=kwargs['affine'])
 
     nibbled = nibble_filled_mask(img, nodataval, nibble)
