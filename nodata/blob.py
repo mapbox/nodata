@@ -11,6 +11,12 @@ from scipy.ndimage.filters import maximum_filter, minimum_filter
 
 
 def pad_window(wnd, pad):
+    try:
+        wnd = wnd.toranges()
+    except AttributeError:
+        # rasterio < 1.0, already a tuple
+        pass
+
     return (
         (wnd[0][0] - pad, wnd[0][1] + pad),
         (wnd[1][0] - pad, wnd[1][1] + pad)
@@ -50,7 +56,6 @@ def handle_RGB(img, mask):
 
 
 def blob_worker(srcs, window, ij, globalArgs):
-
     pad = globalArgs['max_search_distance'] + 1
     padded = pad_window(window, pad)
     padWindow = Window.from_slices(*padded, boundless=True)

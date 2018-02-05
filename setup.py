@@ -8,7 +8,7 @@ with codecs_open('README.rst', encoding='utf-8') as f:
 
 
 setup(name='nodata',
-      version='0.6.0',
+      version='0.5.0',
       description=u"Utilities for handling nodata",
       long_description=long_description,
       classifiers=[],
