@@ -104,5 +104,5 @@ class NodataPoolMan:
         for out_window, data in self.pool.imap_unordered(
                 compute_window_mask, iterargs):
             yield out_window, numpy.fromstring(
-                                zlib.decompress(data), self.dtype).reshape(
-                                    rasterio.window_shape(out_window))
+                        zlib.decompress(data), self.dtype).reshape(
+                            [int(x) for x in rasterio.window_shape(out_window)])
