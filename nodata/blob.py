@@ -1,4 +1,3 @@
-import click
 import json
 import numpy as np
 from numbers import Number
@@ -10,28 +9,32 @@ import riomucho
 
 from scipy.ndimage.filters import maximum_filter, minimum_filter
 
+
 def pad_window(wnd, pad):
     return (
         (wnd[0][0] - pad, wnd[0][1] + pad),
         (wnd[1][0] - pad, wnd[1][1] + pad)
     )
 
+
 def test_rgb(count, nodata, alphafy, outCount):
     if count == 3 and alphafy:
         if not isinstance(nodata, Number):
             raise ValueError('3 band imagery must have a defined nodata value')
-        
+
         return None, nodata, outCount
     elif alphafy:
         return None, None, count
     else:
         return nodata, nodata, count
 
+
 def fill_nodata(img, mask, fillBands, maxSearchDistance):
     for b in fillBands:
         img[b - 1] = fillnodata(img[b - 1], mask, maxSearchDistance)
 
     return img
+
 
 def runNodataFiller(mask, pad):
     nonZero = np.count_nonzero(mask[pad:-pad, pad:-pad])
@@ -45,12 +48,12 @@ def runNodataFiller(mask, pad):
 def handle_RGB(img, mask):
     return np.concatenate([img, mask.reshape(1, mask.shape[-2], mask.shape[-1])])
 
+
 def blob_worker(srcs, window, ij, globalArgs):
 
     pad = globalArgs['max_search_distance'] + 1
-
-    padWindow = Window.from_slices(*pad_window(window, pad))
-    
+    padded = pad_window(window, pad)
+    padWindow = Window.from_slices(*padded)
     img = srcs[0].read(boundless=True, window=padWindow)
 
     if isinstance(globalArgs['selectNodata'], Number):
@@ -60,19 +63,25 @@ def blob_worker(srcs, window, ij, globalArgs):
     else:
         mask = img[-1]
         alphamask = True
-    
-    if globalArgs['maskThreshold'] != None and alphamask:
-        img[-1] = np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype) * np.iinfo(img.dtype).max
+
+    if globalArgs['maskThreshold'] is not None and alphamask:
+        img[-1] = (np.invert(img[-1] < globalArgs['maskThreshold']).astype(img.dtype)
+                   * np.iinfo(img.dtype).max)
         mask = img[-1]
 
     if runNodataFiller(mask, pad):
-        img = fill_nodata(img, mask, globalArgs['bands'], globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
-        if globalArgs['nibblemask'] and alphamask == False and 'nodata' in srcs[0].meta:
+        img = fill_nodata(
+            img, mask, globalArgs['bands'],
+            globalArgs['max_search_distance'])[:, pad: -pad, pad: -pad]
+
+        if globalArgs['nibblemask'] \
+                and alphamask is False \
+                and 'nodata' in srcs[0].meta:
+
             img = nibble_filled_mask(
                 img,
                 srcs[0].meta['nodata'],
-                globalArgs['max_search_distance']
-                )
+                globalArgs['max_search_distance'])
 
         elif globalArgs['nibblemask'] and alphamask:
             img[-1] = nibble_filled_mask(
@@ -87,9 +96,11 @@ def blob_worker(srcs, window, ij, globalArgs):
     return img
 
 
-def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
+def blob_nodata(
+        src_path, dst_path, bidx, max_search_distance, nibblemask,
         creation_options, maskThreshold, workers, alphafy):
-
+    """
+    """
     with rio.open(src_path) as src:
         windows = [
             [window, ij] for ij, window in src.block_windows()
@@ -101,9 +112,7 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
         outNodata, selectNodata, outCount = test_rgb(src.count, src.nodata, alphafy, 4)
 
         options.update(**kwds)
-        # Update withcreation options like 'compress': 'lzw'.
         options.update(**creation_options)
-
         options.update(count=outCount, nodata=outNodata)
 
         if bidx:
@@ -113,27 +122,30 @@ def blob_nodata(src_path, dst_path, bidx, max_search_distance, nibblemask,
                 raise e
 
             if bidx and (len(bidx) == 0 or len(bidx) > src.count):
-                raise ValueError("Bands %s differ from source count of %s" % (', '.join([str(b) for b in bidx]), src.count))
+                raise ValueError(
+                    "Bands %s differ from source count of %s" %
+                    (', '.join([str(b) for b in bidx]), src.count))
         elif alphafy and src.count == 3:
             bidx = list(src.indexes)
             bidx.append(src.indexes[-1] + 1)
         else:
             bidx = list(src.indexes)
 
-        if maskThreshold != None:
+        if maskThreshold is not None:
             maskThreshold = np.iinfo(options['dtype']).max - maskThreshold
 
-    with riomucho.RioMucho([src_path], dst_path, blob_worker,
-        windows=windows,
-        global_args={
-            'max_search_distance': max_search_distance,
-            'nibblemask': nibblemask,
-            'bands': bidx,
-            'maskThreshold': maskThreshold,
-            'selectNodata': selectNodata
-        }, 
-        options=options,
-        mode='manual_read') as rm:
+    with riomucho.RioMucho(
+            [src_path], dst_path, blob_worker,
+            windows=windows,
+            global_args={
+                'max_search_distance': max_search_distance,
+                'nibblemask': nibblemask,
+                'bands': bidx,
+                'maskThreshold': maskThreshold,
+                'selectNodata': selectNodata
+            },
+            options=options,
+            mode='manual_read') as rm:
 
         rm.run(workers)
 
@@ -150,6 +162,7 @@ def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
 
     return filled
 
+
 def make_nibbled(src_path, dst_path, nibble):
     with rio.open(src_path, 'r') as src:
         img = src.read(masked=False)
@@ -159,8 +172,7 @@ def make_nibbled(src_path, dst_path, nibble):
         else:
             nodataval = 0.0
 
-    # to silence the warning  
-    kwargs.update(compress='lzw', transform=kwargs['affine'])
+    kwargs.update(compress='lzw')
 
     nibbled = nibble_filled_mask(img, nodataval, nibble)
 
