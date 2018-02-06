@@ -12,28 +12,16 @@ def image_reader(path):
         return src.read()
 
 
-def test_cases():
-    testdir = 'tests/fixtures/alpha_unit'
-    images = [os.path.join(testdir, i) for i in os.listdir(testdir)
-              if re.compile('.*.tif').match(i.lower())]
-
-    testdir = 'tests/expected/alpha_simple'
-    expected = [os.path.join(testdir, i) for i in os.listdir(testdir)
-                if re.compile('.*.tif').match(i.lower())]
-
-    args = [
-        (0, 0, 0),
-        (0, 0, 0),
-        (255, 255, 255),
-        (0, 0, 0),
-        (255, 255, 255)]
-
-    assert len(args) == len(images) == len(expected)
-    return zip(images, expected, args)
-
-
 @pytest.mark.parametrize(
-    'path, expected, args', test_cases())
+    'path, expected, args',
+    (
+        ('tests/fixtures/alpha_unit/window-1.tif', 'tests/expected/alpha_simple/window-1.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-2.tif', 'tests/expected/alpha_simple/window-2.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-3.tif', 'tests/expected/alpha_simple/window-3.tif', (255, 255, 255)),
+        ('tests/fixtures/alpha_unit/window-4.tif', 'tests/expected/alpha_simple/window-4.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-5.tif', 'tests/expected/alpha_simple/window-5.tif', (255, 255, 255))
+    )
+)
 def test_runner(path, expected, args):
     img = image_reader(path)
     depth, rows, cols = img.shape
