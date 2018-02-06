@@ -6,46 +6,33 @@ import numpy as np
 
 import nodata.alphamask as alphamask
 
+
 def image_reader(path):
     with rio.open(path) as src:
         return src.read()
 
-@pytest.fixture
-def imagesToTest():
-    testdir = 'tests/fixtures/alpha_unit'
-    return [os.path.join(testdir, i) for i in os.listdir(testdir) if re.compile('.*.tif').match(i.lower())]
 
-@pytest.fixture
-def expectedOutput():
-    testdir = 'tests/expected/alpha_simple'
-    return [os.path.join(testdir, i) for i in os.listdir(testdir) if re.compile('.*.tif').match(i.lower())]
-
-@pytest.fixture
-def functionArgs():
-    return [
-        (0, 0, 0),
-        (0, 0, 0),
-        (255, 255, 255),
-        (0, 0, 0),
-        (255, 255, 255)
-        ]
-
-def test_runner(imagesToTest, expectedOutput, functionArgs):
-    assert len(imagesToTest) == len(expectedOutput), "Test fixture length %s must equal expected length %s" % (len(imagesToTest), len(expectedOutput))
-    assert len(imagesToTest) == len(functionArgs), "Test fixture length %s must equal argument length %s" % (len(imagesToTest), len(expectedOutput))
-
+@pytest.mark.parametrize(
+    'path, expected, args',
+    (
+        ('tests/fixtures/alpha_unit/window-1.tif', 'tests/expected/alpha_simple/window-1.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-2.tif', 'tests/expected/alpha_simple/window-2.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-3.tif', 'tests/expected/alpha_simple/window-3.tif', (255, 255, 255)),
+        ('tests/fixtures/alpha_unit/window-4.tif', 'tests/expected/alpha_simple/window-4.tif', (0, 0, 0)),
+        ('tests/fixtures/alpha_unit/window-5.tif', 'tests/expected/alpha_simple/window-5.tif', (255, 255, 255))
+    )
+)
+def test_runner(path, expected, args):
+    img = image_reader(path)
+    depth, rows, cols = img.shape
     pad = 64
+    outputImg = np.concatenate(
+        [img, alphamask.simple_mask(img, args).reshape((1, rows, cols))])[:, pad: -pad, pad: -pad]
 
-    for path, expected, args in zip(imagesToTest, expectedOutput, functionArgs):
-        img = image_reader(path)
-        depth, rows, cols = img.shape
+    expectedImg = image_reader(expected)
 
-        expectedImg = image_reader(expected)
-        outputImg = np.concatenate([img, alphamask.simple_mask(img, args).reshape((1, rows, cols))])[:, pad: -pad, pad: -pad]
-
-        assert outputImg.shape == expectedImg.shape
-
-        assert np.array_equal(outputImg, expectedImg)
+    assert outputImg.shape == expectedImg.shape
+    assert np.array_equal(outputImg, expectedImg)
 
 
 def test_alphamask_good_alphaonly():

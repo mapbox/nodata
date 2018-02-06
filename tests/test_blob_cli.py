@@ -187,7 +187,7 @@ def test_blob_fail_no_nodata():
 
     with rio.open(infile) as src:
         options = src.meta.copy()
-        options.update(nodata=None, transform=src.affine)
+        options.update(nodata=None)
 
         with rio.open(badfile, 'w', **options) as dst:
             dst.write(src.read())

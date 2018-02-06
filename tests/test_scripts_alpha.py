@@ -4,6 +4,7 @@ import zlib
 import numpy
 import pytest
 import rasterio
+from rasterio.windows import Window
 
 from nodata.scripts.alpha import (
     all_valid, init_worker, finalize_worker, compute_window_mask,
@@ -29,12 +30,12 @@ def worker(request):
 
 def test_compute_window_mask(worker):
     """Get an all-valid mask for one window"""
-    in_window = ((0, 100), (0, 100))
+    in_window = Window.from_slices((0, 100), (0, 100))
     out_window, data = compute_window_mask((in_window, 0, {}))
     assert in_window == out_window
     assert (numpy.fromstring(
         zlib.decompress(data), 'uint8').reshape(
-            rasterio.window_shape(out_window)) == 255).all()
+            [int(c) for c in rasterio.windows.shape(out_window)]) == 255).all()
 
 
 @pytest.mark.parametrize(
@@ -44,9 +45,9 @@ def test_pool_man_mask(input_path):
     manager = NodataPoolMan(input_path, all_valid, 0)
     assert manager.input_path == input_path
     assert manager.nodata == 0
-    result = manager.mask(windows=[((0, 100), (0, 100))])
+    result = manager.mask(windows=[Window.from_slices((0, 100), (0, 100))])
     window, arr = next(result)
-    assert window == ((0, 100), (0, 100))
+    assert window == Window.from_slices((0, 100), (0, 100))
     assert (arr == 255).all()
     with pytest.raises(StopIteration):
         next(result)
@@ -58,9 +59,9 @@ def test_pool_man_mask_keywords(keywords):
     """NodataPoolMan initializes and computes mask of a file"""
     manager = NodataPoolMan(
         'tests/fixtures/alpha/lossy-curved-edges.tif', all_valid, 0)
-    result = manager.mask(windows=[((0, 100), (0, 100))], **keywords)
+    result = manager.mask(windows=[Window.from_slices((0, 100), (0, 100))], **keywords)
     window, arr = next(result)
-    assert window == ((0, 100), (0, 100))
+    assert window == Window.from_slices((0, 100), (0, 100))
     assert (arr == 255).all()
     with pytest.raises(StopIteration):
         next(result)

@@ -22,10 +22,11 @@ setup(name='nodata',
       zip_safe=False,
       install_requires=[
           'click',
-          'rasterio',
+          'raster-tester',
+          'rasterio>=1.0a12',
           'rio-mucho',
-          'scipy',
-          'raster-tester'
+          'scikit-image',
+          'scipy'
       ],
       extras_require={
           'test': ['pytest', 'pytest-cov'],

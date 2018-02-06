@@ -5,9 +5,20 @@ import click
 
 
 def makehappytiff(dst_path, seams_path):
-    kwargs = {'count': 4, 'crs': {'init': u'epsg:3857'}, 'dtype': 'uint8', 'affine': Affine(4.595839562240513, 0.0, -13550756.3744,
-       0.0, -4.595839562240513, 6315533.02503), 'driver': u'GTiff', 'transform': Affine(4.595839562240513, 0.0, -13550756.3744,
-       0.0, -4.595839562240513, 6315533.02503), 'height': 1065, 'width': 1065, 'nodata': None, 'compress': 'lzw', 'blockxsize': 256, 'tiled': True, 'blockysize': 256}
+    kwargs = {
+        'blockxsize': 256,
+        'blockysize': 256,
+        'compress': 'lzw',
+        'count': 4,
+        'crs': {'init': u'epsg:3857'},
+        'driver': u'GTiff',
+        'dtype': 'uint8',
+        'height': 1065,
+        'nodata': None,
+        'tiled': True,
+        'transform': Affine(4.595839562240513, 0.0, -13550756.3744, 0.0, -4.595839562240513, 6315533.02503),
+        'width': 1065}
+
     imsize = 1065
     testdata = [(np.random.rand(imsize,imsize)*255).astype(np.uint8) for i in range(4)]
     
