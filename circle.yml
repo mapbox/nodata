@@ -2,7 +2,6 @@ dependencies:
 
     pre:
         - pip install tox tox-pyenv
-        - sudo apt-get -y --no-install-recommends --force-yes install libgdal1h gdal-bin libgdal-dev
 
     override:
         - pyenv local 2.7.10 3.6.1
