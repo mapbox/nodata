@@ -32,8 +32,7 @@ def test_runner(path, expected, args):
     expectedImg = image_reader(expected)
 
     assert outputImg.shape == expectedImg.shape
-    assert np.array_equal(outputImg[3], expectedImg[3])  # alpha bands equal
-    # assert np.array_equal(outputImg, expectedImg)
+    assert np.array_equal(outputImg, expectedImg)
 
 
 def test_alphamask_good_alphaonly():
