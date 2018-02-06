@@ -106,6 +106,6 @@ class NodataPoolMan:
 
             out_data = numpy.fromstring(
                         zlib.decompress(data), self.dtype).reshape(
-                            [int(x) for x in rasterio.window_shape(out_window)])
+                            [int(x) for x in rasterio.windows.shape(out_window)])
 
             yield out_window, out_data

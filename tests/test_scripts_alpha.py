@@ -35,7 +35,7 @@ def test_compute_window_mask(worker):
     assert in_window == out_window
     assert (numpy.fromstring(
         zlib.decompress(data), 'uint8').reshape(
-            [int(c) for c in rasterio.window_shape(out_window)]) == 255).all()
+            [int(c) for c in rasterio.windows.shape(out_window)]) == 255).all()
 
 
 @pytest.mark.parametrize(
