@@ -7,17 +7,19 @@ import rasterio
 from rasterio.windows import Window
 
 from nodata.scripts.alpha import (
-    all_valid, init_worker, finalize_worker, compute_window_mask,
-    NodataPoolMan)
+    all_valid,
+    init_worker,
+    finalize_worker,
+    compute_window_mask,
+    NodataPoolMan,
+)
 
 
 def test_all_valid():
-    assert (
-        all_valid(numpy.empty((2, 2), dtype='uint8'), 0) == 255).all()
+    assert (all_valid(numpy.empty((2, 2), dtype="uint8"), 0) == 255).all()
 
 
-@pytest.fixture(
-        scope='function', params=glob.glob('tests/fixtures/alpha/*.tif'))
+@pytest.fixture(scope="function", params=glob.glob("tests/fixtures/alpha/*.tif"))
 def worker(request):
     """This provides the global `src` for compute_window_mask"""
     init_worker(request.param, all_valid)
@@ -33,13 +35,15 @@ def test_compute_window_mask(worker):
     in_window = Window.from_slices((0, 100), (0, 100))
     out_window, data = compute_window_mask((in_window, 0, {}))
     assert in_window == out_window
-    assert (numpy.fromstring(
-        zlib.decompress(data), 'uint8').reshape(
-            [int(c) for c in rasterio.windows.shape(out_window)]) == 255).all()
+    assert (
+        numpy.fromstring(zlib.decompress(data), "uint8").reshape(
+            [int(c) for c in rasterio.windows.shape(out_window)]
+        )
+        == 255
+    ).all()
 
 
-@pytest.mark.parametrize(
-        "input_path", glob.glob('tests/fixtures/alpha/*.tif'))
+@pytest.mark.parametrize("input_path", glob.glob("tests/fixtures/alpha/*.tif"))
 def test_pool_man_mask(input_path):
     """NodataPoolMan initializes and computes mask of a file"""
     manager = NodataPoolMan(input_path, all_valid, 0)
@@ -53,12 +57,10 @@ def test_pool_man_mask(input_path):
         next(result)
 
 
-@pytest.mark.parametrize("keywords", [
-    {'padding': 0}])
+@pytest.mark.parametrize("keywords", [{"padding": 0}])
 def test_pool_man_mask_keywords(keywords):
     """NodataPoolMan initializes and computes mask of a file"""
-    manager = NodataPoolMan(
-        'tests/fixtures/alpha/lossy-curved-edges.tif', all_valid, 0)
+    manager = NodataPoolMan("tests/fixtures/alpha/lossy-curved-edges.tif", all_valid, 0)
     result = manager.mask(windows=[Window.from_slices((0, 100), (0, 100))], **keywords)
     window, arr = next(result)
     assert window == Window.from_slices((0, 100), (0, 100))

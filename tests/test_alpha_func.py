@@ -13,21 +13,42 @@ def image_reader(path):
 
 
 @pytest.mark.parametrize(
-    'path, expected, args',
+    "path, expected, args",
     (
-        ('tests/fixtures/alpha_unit/window-1.tif', 'tests/expected/alpha_simple/window-1.tif', (0, 0, 0)),
-        ('tests/fixtures/alpha_unit/window-2.tif', 'tests/expected/alpha_simple/window-2.tif', (0, 0, 0)),
-        ('tests/fixtures/alpha_unit/window-3.tif', 'tests/expected/alpha_simple/window-3.tif', (255, 255, 255)),
-        ('tests/fixtures/alpha_unit/window-4.tif', 'tests/expected/alpha_simple/window-4.tif', (0, 0, 0)),
-        ('tests/fixtures/alpha_unit/window-5.tif', 'tests/expected/alpha_simple/window-5.tif', (255, 255, 255))
-    )
+        (
+            "tests/fixtures/alpha_unit/window-1.tif",
+            "tests/expected/alpha_simple/window-1.tif",
+            (0, 0, 0),
+        ),
+        (
+            "tests/fixtures/alpha_unit/window-2.tif",
+            "tests/expected/alpha_simple/window-2.tif",
+            (0, 0, 0),
+        ),
+        (
+            "tests/fixtures/alpha_unit/window-3.tif",
+            "tests/expected/alpha_simple/window-3.tif",
+            (255, 255, 255),
+        ),
+        (
+            "tests/fixtures/alpha_unit/window-4.tif",
+            "tests/expected/alpha_simple/window-4.tif",
+            (0, 0, 0),
+        ),
+        (
+            "tests/fixtures/alpha_unit/window-5.tif",
+            "tests/expected/alpha_simple/window-5.tif",
+            (255, 255, 255),
+        ),
+    ),
 )
 def test_runner(path, expected, args):
     img = image_reader(path)
     depth, rows, cols = img.shape
     pad = 64
     outputImg = np.concatenate(
-        [img, alphamask.simple_mask(img, args).reshape((1, rows, cols))])[:, pad: -pad, pad: -pad]
+        [img, alphamask.simple_mask(img, args).reshape((1, rows, cols))]
+    )[:, pad:-pad, pad:-pad]
 
     expectedImg = image_reader(expected)
 
@@ -69,6 +90,7 @@ def test_alphamask_good_alphaonly():
 
     assert len(createColIdx) == 1
     assert rColIdx == createColIdx[0]
+
 
 def test_all_valid():
     all_valid = alphamask.all_valid
@@ -115,6 +137,7 @@ def test_slic_mask_not_any():
 def test_slic_mask_any():
     """SLIC does identify nodata on the edge of a noisy background."""
     import random
+
     slic_mask = alphamask.slic_mask
 
     random.seed(1)

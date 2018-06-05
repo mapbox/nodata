@@ -19,7 +19,9 @@ def _hacky_make_image(labeled_img, u_labels, measures, m_key, dtype=np.int16):
         out[b] = measures[a[0] - 1][m_key]
         return None
 
-    sci_meas.labeled_comprehension(labeled_img, labeled_img, u_labels, value_grab, float, 0, pass_positions=True)
+    sci_meas.labeled_comprehension(
+        labeled_img, labeled_img, u_labels, value_grab, float, 0, pass_positions=True
+    )
 
     return out.reshape(labeled_img.shape)
 
@@ -49,7 +51,7 @@ def all_valid_edges(data, ndv, threshold=0):
 
 
 def simple_mask(data, ndv):
-    '''Exact nodata masking'''
+    """Exact nodata masking"""
     depth, rows, cols = data.shape
     nd = np.iinfo(data.dtype).max
     alpha = np.invert(np.all(np.dstack(data) == ndv, axis=2)).astype(data.dtype) * nd
@@ -69,12 +71,19 @@ def slic_mask(arr, nodata, n_clusters=50, threshold=5, debug=False):
     clusters = slic(near_nodata, n_clusters)
     labeled = measure.label(clusters) + 1
     measures = measure.regionprops(labeled, intensity_image=near_nodata, cache=True)
-    mean_intensity = _hacky_make_image(labeled, np.unique(labeled), measures, 'mean_intensity')
+    mean_intensity = _hacky_make_image(
+        labeled, np.unique(labeled), measures, "mean_intensity"
+    )
     mask = binary_fill_holes(np.invert(binary_fill_holes(mean_intensity >= threshold)))
     nd = np.iinfo(arr.dtype).max
     mask = np.invert(mask) * nd
     if debug:
         d = dict([(m.label, m.mean_intensity) for m in measures])
-        return mask.astype('uint8'), labeled.astype('uint32'), mean_intensity.astype('uint32'), d
+        return (
+            mask.astype("uint8"),
+            labeled.astype("uint32"),
+            mean_intensity.astype("uint32"),
+            d,
+        )
     else:
-        return mask.astype('uint8')
+        return mask.astype("uint8")

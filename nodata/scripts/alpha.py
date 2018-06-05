@@ -2,6 +2,7 @@ from itertools import repeat
 from multiprocessing import cpu_count, Pool
 import sys
 import zlib
+
 try:
     from itertools import izip
 except ImportError:
@@ -35,6 +36,7 @@ def finalize_worker():
 
 # The following function is executed by worker processes.
 
+
 def compute_window_mask(args):
     """Execute the given function with keyword arguments to compute a
     valid data mask.
@@ -44,7 +46,7 @@ def compute_window_mask(args):
     window, nodata, extra_args = args
     global mask_function, src_dataset
 
-    padding = int(extra_args.get('padding', 0))
+    padding = int(extra_args.get("padding", 0))
 
     if padding:
         start, stop = zip(*window)
@@ -76,8 +78,7 @@ class NodataPoolMan:
     windows of a dataset.
     """
 
-    def __init__(self, input_path, func, nodata, num_workers=None,
-            max_tasks=100):
+    def __init__(self, input_path, func, nodata, num_workers=None, max_tasks=100):
         """Create a pool of workers to process window masks"""
         self.input_path = input_path
         self.func = func
@@ -89,8 +90,8 @@ class NodataPoolMan:
             self.dtype = src.dtypes[0]
 
         self.pool = Pool(
-            num_workers or cpu_count()-1, init_worker, (input_path, func),
-            max_tasks)
+            num_workers or cpu_count() - 1, init_worker, (input_path, func), max_tasks
+        )
 
     def mask(self, windows, **kwargs):
         """Iterate over windows and compute mask arrays.
@@ -101,11 +102,10 @@ class NodataPoolMan:
         Yields window, ndarray pairs.
         """
         iterargs = izip(windows, repeat(self.nodata), repeat(kwargs))
-        for out_window, data in self.pool.imap_unordered(
-                compute_window_mask, iterargs):
+        for out_window, data in self.pool.imap_unordered(compute_window_mask, iterargs):
 
-            out_data = numpy.fromstring(
-                        zlib.decompress(data), self.dtype).reshape(
-                            [int(x) for x in rasterio.windows.shape(out_window)])
+            out_data = numpy.fromstring(zlib.decompress(data), self.dtype).reshape(
+                [int(x) for x in rasterio.windows.shape(out_window)]
+            )
 
             yield out_window, out_data
