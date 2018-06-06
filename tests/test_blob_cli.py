@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 
 from click.testing import CliRunner
 import rasterio as rio
@@ -17,7 +18,7 @@ class TestingSetup:
     def cleanup(self):
         try:
             shutil.rmtree(self.path)
-        except:
+        except FileNotFoundError as err:
             pass
 
 
@@ -35,7 +36,7 @@ def test_blob_filling_random():
     result = runner.invoke(cli, ["blob", blobfile, filled_file, "-m", 4, "-n"])
     assert result.exit_code == 0
 
-    assert make_testing_data.getnulldiff(blobfile, filled_file, 101) == None
+    assert make_testing_data.getnulldiff(blobfile, filled_file, 101) is None
 
     tester.cleanup()
 
@@ -187,26 +188,6 @@ def test_blob_filling_realdata_threshold():
     assert result.exit_code == 0
 
     raster_tester.compare(filled_file, expectedfile)
-    tester.cleanup()
-
-
-def test_blob_filling_rgb():
-    tmpdir = "/tmp/blob_filling"
-    tester = TestingSetup(tmpdir)
-
-    infile = os.path.join(os.getcwd(), "tests/fixtures/blob/rgb_toblob.tif")
-    blobbed_file = os.path.join(tmpdir, "blobbedrgb.tif")
-    expectedfile = os.path.join(os.getcwd(), "tests/expected/blob/rgb_toblob.tif")
-
-    runner = CliRunner()
-
-    result = runner.invoke(
-        cli,
-        ["blob", infile, blobbed_file, "-m", 10, "--co", "compress=JPEG", "--alphafy"],
-    )
-    assert result.exit_code == 0
-
-    raster_tester.compare(blobbed_file, expectedfile)
     tester.cleanup()
 
 

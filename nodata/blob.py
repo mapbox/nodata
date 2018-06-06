@@ -170,7 +170,7 @@ def nibble_filled_mask(filled, nodataval, max_search_distance, is_mask=False):
             & (filled[2] == nodataval)
         )
         nmsk = maximum_filter(nmsk, size=(max_search_distance * 2 + 1))
-        mskInds = np.where(nmsk == True)
+        mskInds = np.where(nmsk is True)
         filled[:, mskInds[0], mskInds[1]] = nodataval
 
     return filled

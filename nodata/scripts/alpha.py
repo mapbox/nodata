@@ -1,6 +1,5 @@
 from itertools import repeat
 from multiprocessing import cpu_count, Pool
-import sys
 import zlib
 
 try:

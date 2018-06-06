@@ -1,7 +1,6 @@
 import rasterio as rio
 from rasterio import Affine
 import numpy as np
-import click
 
 
 def makehappytiff(dst_path, seams_path):

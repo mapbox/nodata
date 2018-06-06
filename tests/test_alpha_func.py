@@ -1,5 +1,3 @@
-import os
-import re
 import pytest
 import rasterio as rio
 import numpy as np

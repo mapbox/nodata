@@ -39,7 +39,7 @@ def test_handle_rgb():
 
 def test_rgb_handling_alphafy():
     outNodata, selectNodata, outCount = blob.test_rgb(3, 0.0, True, 4)
-    assert outNodata == None
+    assert outNodata is None
     assert selectNodata == 0.0
     assert outCount == 4
 
@@ -53,8 +53,8 @@ def test_rgb_handling_no_alphafy():
 
 def test_rgba_handling():
     outNodata, selectNodata, outCount = blob.test_rgb(4, None, True, 4)
-    assert outNodata == None
-    assert selectNodata == None
+    assert outNodata is None
+    assert selectNodata is None
     assert outCount == 4
 
 

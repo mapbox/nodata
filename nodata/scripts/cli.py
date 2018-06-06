@@ -67,17 +67,6 @@ def blob(
     alphafy,
 ):
     """"""
-    args = (
-        src_path,
-        dst_path,
-        bidx,
-        max_search_distance,
-        nibblemask,
-        creation_options,
-        mask_threshold,
-        jobs,
-        alphafy,
-    )
     blob_nodata(
         src_path,
         dst_path,
