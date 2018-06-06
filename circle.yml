@@ -1,7 +1,8 @@
 dependencies:
 
     pre:
-        - pip install tox tox-pyenv
+        - pip install tox tox-pyenv flake8
 
     override:
+        - flake8 ./ --max-line-length=88
         - pyenv local 2.7.10 3.6.1
