@@ -18,7 +18,7 @@ class TestingSetup:
     def cleanup(self):
         try:
             shutil.rmtree(self.path)
-        except FileNotFoundError as err:
+        except FileNotFoundError:
             pass
 
 
