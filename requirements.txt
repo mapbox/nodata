@@ -3,3 +3,4 @@ rasterio
 raster-tester
 scikit-image
 scipy
+pre-commit
