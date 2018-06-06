@@ -122,6 +122,7 @@ def test_blob_filling_realdata_rgb():
             "--alphafy",
         ],
     )
+
     assert result.exit_code == 0
 
     raster_tester.compare(filled_file, expectedfile)
