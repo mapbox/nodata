@@ -4,5 +4,5 @@ dependencies:
         - pip install tox tox-pyenv flake8
 
     override:
-        - flake8 ./ --max-line-length=88
+        - "git diff-tree --no-commit-id --name-only -r $CIRCLE_SHA1 | xargs pre-commit run --files"
         - pyenv local 2.7.10 3.6.1
