@@ -1,7 +1,7 @@
 dependencies:
 
     pre:
-        - pip install tox tox-pyenv flake8 pre-commit
+        - pip install tox tox-pyenv pre-commit
 
     override:
         - "git diff-tree --no-commit-id --name-only -r $CIRCLE_SHA1 | xargs pre-commit run --files"
