@@ -17,9 +17,13 @@ def areaToFill():
     rInd, cInd = np.random.randint(0, 2, 2)
     rRowInds[rInd] = rRow
     rColInds[cInd] = rCol
+    r1, r2 = rRowInds
+    c1, c2 = rColInds
     for i in range(3):
-        timg[i, rRowInds[0] : rRowInds[1], rColInds[0] : rColInds[1]] = 100
-    timg[-1, rRowInds[0] : rRowInds[1], rColInds[0] : rColInds[1]] = 255
+        timg[i, r1:r2, c1:c2] = 100
+
+    timg[-1, r1:r2, c1:c2] = 255
+
     return timg
 
 

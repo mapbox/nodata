@@ -16,10 +16,7 @@ class TestingSetup:
         os.mkdir(self.path)
 
     def cleanup(self):
-        try:
-            shutil.rmtree(self.path)
-        except FileNotFoundError:
-            pass
+        shutil.rmtree(self.path, ignore_errors=True)
 
 
 def test_blob_filling_random():
