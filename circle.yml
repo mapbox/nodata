@@ -4,5 +4,5 @@ dependencies:
         - pip install tox tox-pyenv flake8 pre-commit
 
     override:
-        - "if $(python -V 2>&1 | grep -q 'Python 3.6'); then git diff-tree --no-commit-id --name-only -r $CIRCLE_SHA1 | xargs pre-commit run --files; fi"
+        - "if $(python -V 2>&1 | grep -q 'Python 3.6'); then pre-commit run --all-files; fi"
         - pyenv local 2.7.10 3.6.1
