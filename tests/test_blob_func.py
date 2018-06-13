@@ -1,5 +1,6 @@
 import numpy as np
 import nodata.blob as blob
+import rasterio
 import pytest
 
 def test_window_padding():
@@ -78,3 +79,29 @@ def test_run_nodatafiller_one(has_one_nodata):
 
 def test_run_nodatafiller_all(has_all_nodata):
     assert blob.runNodataFiller(has_all_nodata, 2) is False
+
+
+def test_keep_tiled_creation_option():
+    opts = {
+        "compress": "JPEG",
+        "tiled": True,
+        "blockxsize": 256,
+        "blockysize": 256,
+    }
+
+    dst_path = '/tmp/blobbed.tif'
+
+    blob.blob_nodata(
+        'tests/fixtures/blob/band_interleave.tif',
+        dst_path,
+        bidx="[1, 2, 3]",
+        max_search_distance=10,
+        nibblemask=False,
+        creation_options=opts,
+        maskThreshold=None,
+        workers=1,
+        alphafy=False,
+    )
+
+    with rasterio.open(dst_path) as src:
+        assert src.is_tiled
