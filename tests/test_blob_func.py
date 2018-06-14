@@ -89,10 +89,15 @@ def test_keep_tiled_creation_option():
         "blockysize": 256,
     }
 
+    src_path = 'tests/fixtures/blob/band_interleave.tif'
     dst_path = '/tmp/blobbed.tif'
 
+    with rasterio.open(src_path) as src:
+        assert src.is_tiled
+        assert src.profile['interleave'] == 'band'
+
     blob.blob_nodata(
-        'tests/fixtures/blob/band_interleave.tif',
+        src_path,
         dst_path,
         bidx="[1, 2, 3]",
         max_search_distance=10,
