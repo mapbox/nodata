@@ -1,5 +1,6 @@
 import numpy as np
 import nodata.blob as blob
+import rasterio
 import pytest
 
 def test_window_padding():
@@ -78,3 +79,88 @@ def test_run_nodatafiller_one(has_one_nodata):
 
 def test_run_nodatafiller_all(has_all_nodata):
     assert blob.runNodataFiller(has_all_nodata, 2) is False
+
+
+def test_keep_tiled_creation_option():
+    opts = {
+        "compress": "JPEG",
+        "tiled": True,
+        "blockxsize": 256,
+        "blockysize": 256,
+    }
+
+    src_path = 'tests/fixtures/blob/band_interleave.tif'
+    dst_path = '/tmp/blobbed.tif'
+
+    with rasterio.open(src_path) as src:
+        assert src.is_tiled
+        assert src.profile['interleave'] == 'band'
+
+    blob.blob_nodata(
+        src_path,
+        dst_path,
+        bidx="[1, 2, 3]",
+        max_search_distance=10,
+        nibblemask=False,
+        creation_options=opts,
+        maskThreshold=None,
+        workers=1,
+        alphafy=False,
+    )
+
+    with rasterio.open(dst_path) as src:
+        assert src.is_tiled
+
+
+def test_compare_interleaving():
+    opts_pixel = {
+        "compress": "JPEG",
+        "tiled": True,
+        "blockxsize": 256,
+        "blockysize": 256,
+        "interleave": "pixel"
+    }
+
+    opts_band = {
+        "compress": "JPEG",
+        "tiled": True,
+        "blockxsize": 256,
+        "blockysize": 256,
+        "interleave": "band"
+    }
+
+    src_path = 'tests/fixtures/blob/band_interleave.tif'
+    dst_pixel_interleaved = '/tmp/blob-pixel-interleaved.tif'
+    dst_band_interleaved = '/tmp/blob-band-interleaved.tif'
+
+    blob.blob_nodata(
+        src_path,
+        dst_pixel_interleaved,
+        bidx="[1, 2, 3]",
+        max_search_distance=10,
+        nibblemask=False,
+        creation_options=opts_pixel,
+        maskThreshold=None,
+        workers=1,
+        alphafy=False,
+    )
+
+    blob.blob_nodata(
+        src_path,
+        dst_band_interleaved,
+        bidx="[1, 2, 3]",
+        max_search_distance=10,
+        nibblemask=False,
+        creation_options=opts_band,
+        maskThreshold=None,
+        workers=1,
+        alphafy=False,
+    )
+
+    with rasterio.open(dst_pixel_interleaved) as pixel_src:
+        with rasterio.open(dst_band_interleaved) as band_src:
+            for pixel, band in zip(
+                map(pixel_src.checksum, pixel_src.indexes),
+                map(band_src.checksum, band_src.indexes)
+            ):
+                assert pixel == band
